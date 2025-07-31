@@ -8,8 +8,8 @@ import Admin from './components/Admin';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 
-const CONTRACT_ADDRESS = '0x8A791620dd6260079BF849Dc5567aDC3F2FdC318';
-const USDT_ADDRESS = '0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6';
+const CONTRACT_ADDRESS = '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853';
+const USDT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -37,13 +37,14 @@ const App = () => {
       setWalletAddress(address);
       const contract = new web3Instance.eth.Contract(lotteryAbi, CONTRACT_ADDRESS);
       setLotteryContract(contract);
+      console.log('Available contract methods:', Object.keys(contract.methods));
       const user = await contract.methods.getUser(address).call();
       if (user.referrer !== '0x0000000000000000000000000000000000000000') {
         setIsRegistered(true);
         setUserData(user);
         const tickets = await contract.methods.getUserTickets(address).call();
         setUserTickets(tickets);
-        fetchWinningTickets(contract);
+        //fetchWinningTickets(contract);
       }
     } catch (error) {
       console.error('MetaMask connection failed:', error);
@@ -51,14 +52,14 @@ const App = () => {
     }
   };
 
-  const fetchWinningTickets = async (contractInstance = lotteryContract) => {
-    try {
-      const winners = await contractInstance.methods.getWinningTickets().call();
-      setWinningTickets(winners.map(Number));
-    } catch (err) {
-      console.error('Error fetching winning tickets', err);
-    }
-  };
+  // const fetchWinningTickets = async (contractInstance = lotteryContract) => {
+  //   // try {
+  //   //   const winners = await contractInstance.methods.getWinningTickets().call();
+  //   //   setWinningTickets(winners.map(Number));
+  //   // } catch (err) {
+  //   //   console.error('Error fetching winning tickets', err);
+  //   // }
+  // };
 
   const handleFetchWinners = async () => {
     try {
@@ -83,6 +84,7 @@ const App = () => {
         alert('Referral ticket does not exist.');
         return;
       }
+      console.log(`Buying ticket with referral ID: ${referralTicketId}`);
       await lotteryContract.methods.buyTicket(referralTicketId).send({ from: walletAddress });
       alert('🎉 Ticket purchased successfully!');
       const user = await lotteryContract.methods.getUser(walletAddress).call();
@@ -90,14 +92,11 @@ const App = () => {
       setIsRegistered(user.referrer !== '0x0000000000000000000000000000000000000000');
       setUserData(user);
       setUserTickets(tickets);
-      fetchWinningTickets();
+      // fetchWinningTickets();
     } catch (error) {
-      console.error('Error buying ticket:', error);
-      if (error?.message?.includes('User denied transaction')) {
-        alert('User denied the transaction.');
-      } else {
-        alert('Ticket purchase failed: ' + (error.message || 'Unknown error'));
-      }
+      console.error('Transaction error:', error);
+      const revertReason = error?.data?.message || error?.data?.originalError?.message || error?.message;
+      alert(revertReason || 'Transaction failed');
     }
   };
 

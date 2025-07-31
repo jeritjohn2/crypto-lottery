@@ -47,11 +47,14 @@ contract CryptoLottery {
 
     IERC20 public usdt;
     address public owner;
+    bool public ownerTicketGenerated = false;
+    string public ownerTicketId;
 
     uint256 public ticketNumber = 1;
     bytes1 public suffix = "A";
 
     mapping(address => User) public users;
+    mapping(address => bool) public userHasPurchasedTicket;
     address[] public userList;
     mapping(string => Ticket) public tickets;
     mapping(address => string[]) public userTickets;
@@ -93,12 +96,6 @@ contract CryptoLottery {
             earnings: 0
         });
         userList.push(msg.sender);
-
-        // Mint first ticket for owner
-        string memory ownerTicketId = generateTicketId();
-        tickets[ownerTicketId] = Ticket(ownerTicketId, msg.sender, false);
-        userTickets[msg.sender].push(ownerTicketId);
-        emit TicketPurchased(msg.sender, ownerTicketId, TICKET_PRICE);
     }
 
     function register(address referrerAddr) internal {
@@ -132,8 +129,9 @@ contract CryptoLottery {
         return userList;
     }
     function buyTicket(string memory referralTicketId) external {
-        // Owner cannot use buyTicket (owner gets ticket in constructor)
+        // Owner cannot use buyTicket (owner gets a ticket via generateOwnerTicket)
         require(msg.sender != owner, "Owner cannot buy ticket");
+        require(!userHasPurchasedTicket[msg.sender], "User has already purchased a ticket");
 
         // Referral ticket ID must be provided
         require(bytes(referralTicketId).length > 0, "Referral ticket ID required");
@@ -161,6 +159,7 @@ contract CryptoLottery {
         string memory newTicketId = generateTicketId();
         tickets[newTicketId] = Ticket(newTicketId, msg.sender, false);
         userTickets[msg.sender].push(newTicketId);
+        userHasPurchasedTicket[msg.sender] = true;
 
         emit TicketPurchased(msg.sender, newTicketId, TICKET_PRICE);
     }
@@ -195,6 +194,20 @@ contract CryptoLottery {
         if (ref3 != address(0)) {
             users[ref3].earnings += (TICKET_PRICE * 1) / 100;
         }
+    }
+
+    function generateOwnerTicket() external {
+        require(msg.sender == owner, "Only owner");
+        require(!ownerTicketGenerated, "Owner ticket already generated");
+
+        // Mint ticket
+        ownerTicketId = generateTicketId();
+        tickets[ownerTicketId] = Ticket(ownerTicketId, msg.sender, false);
+        userTickets[msg.sender].push(ownerTicketId);
+        ownerTicketGenerated = true;
+        userHasPurchasedTicket[msg.sender] = true;
+
+        emit TicketPurchased(msg.sender, ownerTicketId, 0); // Price is 0 for owner
     }
 
     function drawWinner(string memory ticketId) external {
