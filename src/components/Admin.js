@@ -51,27 +51,44 @@ const Admin = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-8">
       {!loggedIn ? (
-        <div>
-          <h2>Admin Login</h2>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Enter admin password"
-          />
-          <button onClick={handleLogin}>Login</button>
+        <div className="bg-primary p-8 rounded-lg shadow-lg max-w-md mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+          <div className="space-y-6">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter admin password"
+              className="w-full bg-secondary text-text placeholder-gray-500 p-3 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+            <button
+              onClick={handleLogin}
+              className="w-full bg-accent hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
+            >
+              Login
+            </button>
+          </div>
         </div>
       ) : (
-        <div>
-          <h2>Admin Panel</h2>
-          {/* Admin features go here */}
-          {ownerTicketGenerated ? (
-            <p>Owner Ticket ID: {ownerTicketId}</p>
-          ) : (
-            <button onClick={handleGenerateTicket}>Generate Owner Ticket</button>
-          )}
+        <div className="bg-primary p-8 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
+          <div className="space-y-4">
+            {ownerTicketGenerated ? (
+              <div>
+                <p className="text-lg">Owner Ticket ID:</p>
+                <p className="p-3 bg-secondary rounded-lg font-mono">{ownerTicketId.toString()}</p>
+              </div>
+            ) : (
+              <button
+                onClick={handleGenerateTicket}
+                className="bg-accent hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
+              >
+                Generate Owner Ticket
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

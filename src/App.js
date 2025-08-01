@@ -8,7 +8,7 @@ import Admin from './components/Admin';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 
-const CONTRACT_ADDRESS = '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853';
+const CONTRACT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
 const USDT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
 const App = () => {
@@ -160,9 +160,9 @@ const App = () => {
 
   return (
     <Router>
-      <div className="app-layout">
+      <div className="flex min-h-screen bg-background text-text">
         <Sidebar />
-        <div className="main-content">
+        <div className="flex-grow p-8">
           <Routes>
             <Route path="/" element={
               <Home
