@@ -85,25 +85,6 @@
       "type": "event"
     },
     {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "string",
-          "name": "ticketId",
-          "type": "string"
-        }
-      ],
-      "name": "WinnerDeclared",
-      "type": "event"
-    },
-    {
       "inputs": [],
       "name": "TICKET_PRICE",
       "outputs": [
@@ -111,6 +92,25 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "allTickets",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
         }
       ],
       "stateMutability": "view",
@@ -143,117 +143,10 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "enum CryptoLottery.ContestType",
-          "name": "",
-          "type": "uint8"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "contestWinners",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "ticketId",
-          "type": "string"
-        },
-        {
-          "internalType": "address",
-          "name": "winner",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "prizeAmount",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "enum CryptoLottery.ContestType",
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "name": "currentRound",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "enum CryptoLottery.ContestType",
-          "name": "contestType",
-          "type": "uint8"
-        },
-        {
-          "internalType": "string[]",
-          "name": "ticketIds",
-          "type": "string[]"
-        },
-        {
-          "internalType": "uint256",
-          "name": "prizeAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "drawContestWinners",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "ticketId",
-          "type": "string"
-        }
-      ],
-      "name": "drawWinner",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "generateOwnerTicket",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getAllUsers",
-      "outputs": [
-        {
-          "internalType": "address[]",
-          "name": "",
-          "type": "address[]"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -275,11 +168,6 @@
           "internalType": "address",
           "name": "",
           "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -297,32 +185,52 @@
       "outputs": [
         {
           "internalType": "address",
-          "name": "referrer",
+          "name": "",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "level1",
+          "name": "",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "level2",
+          "name": "",
           "type": "address"
         },
         {
           "internalType": "address",
-          "name": "level3",
+          "name": "",
           "type": "address"
         },
         {
           "internalType": "uint256",
-          "name": "pairs",
+          "name": "",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "earnings",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
           "type": "uint256"
         }
       ],
@@ -343,47 +251,6 @@
           "internalType": "string[]",
           "name": "",
           "type": "string[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "enum CryptoLottery.ContestType",
-          "name": "contestType",
-          "type": "uint8"
-        },
-        {
-          "internalType": "uint256",
-          "name": "round",
-          "type": "uint256"
-        }
-      ],
-      "name": "getWinners",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "string",
-              "name": "ticketId",
-              "type": "string"
-            },
-            {
-              "internalType": "address",
-              "name": "winner",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "prizeAmount",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct CryptoLottery.WinnerInfo[]",
-          "name": "",
-          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -475,6 +342,30 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "enum CryptoLottery.ContestType",
+          "name": "",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "selectedWinners",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "serviceWallet",
       "outputs": [
@@ -532,11 +423,6 @@
           "internalType": "address",
           "name": "buyer",
           "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "isWinner",
-          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -655,6 +541,26 @@
         {
           "internalType": "uint256",
           "name": "earnings",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "leftChild",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "rightChild",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "leftCount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rightCount",
           "type": "uint256"
         }
       ],

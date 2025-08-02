@@ -1,68 +1,52 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Trophy, Calendar } from 'lucide-react';
 
-const Contest = ({
-  selectedContestType,
-  setSelectedContestType,
-  selectedRound,
-  setSelectedRound,
-  handleFetchWinners,
-  fetchedWinners
-}) => (
-  <div className="space-y-8">
-    <div className="bg-primary p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6">Check Winners</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="contestType" className="block mb-2 font-semibold">Contest Type:</label>
-          <select
-            id="contestType"
-            value={selectedContestType}
-            onChange={(e) => setSelectedContestType(e.target.value)}
-            className="w-full bg-secondary text-text p-3 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            <option value="0">Weekly</option>
-            <option value="1">Monthly</option>
-            <option value="2">Quarterly</option>
-            <option value="3">Half-Yearly</option>
-            <option value="4">Grand Prize 1st</option>
-            <option value="5">Grand Prize 2nd</option>
-            <option value="6">Grand Prize 3rd</option>
-            <option value="7">Grand Prize 4th</option>
-            <option value="8">Grand Prize 5th</option>
-            <option value="9">Grand Prize 6th</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="round" className="block mb-2 font-semibold">Round:</label>
-          <input
-            id="round"
-            type="number"
-            value={selectedRound}
-            min="0"
-            onChange={(e) => setSelectedRound(e.target.value)}
-            className="w-full bg-secondary text-text p-3 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-        </div>
+const contests = [
+  { id: 'weekly', name: 'Weekly Contest', winners: 10, prize: 50, icon: <Calendar /> },
+  { id: 'monthly', name: 'Monthly Contest', winners: 4, prize: 200, icon: <Calendar /> },
+  { id: 'quarterly', name: 'Quarterly Contest', winners: 4, prize: 400, icon: <Calendar /> },
+  { id: 'half-yearly', name: 'Half-Yearly Contest', winners: 4, prize: 800, icon: <Calendar /> },
+  { id: 'grand-1', name: 'Grand Prize 1st', winners: 1, prize: 100000, icon: <Trophy /> },
+  { id: 'grand-2', name: 'Grand Prize 2nd', winners: 2, prize: 50000, icon: <Trophy /> },
+  { id: 'grand-3', name: 'Grand Prize 3rd', winners: 10, prize: 10000, icon: <Trophy /> },
+  { id: 'grand-4', name: 'Grand Prize 4th', winners: 100, prize: 1000, icon: <Trophy /> },
+  { id: 'grand-5', name: 'Grand Prize 5th', winners: 1000, prize: 100, icon: <Trophy /> },
+  { id: 'grand-6', name: 'Grand Prize 6th', winners: 2000, prize: 50, icon: <Trophy /> },
+];
+
+const ContestCard = ({ contest, navigate }) => (
+  <div
+    className="bg-primary p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col justify-between cursor-pointer"
+    onClick={() => navigate(`/contest/${contest.id}`)}
+  >
+    <div>
+      <div className="flex items-center text-accent mb-4">
+        {React.cloneElement(contest.icon, { size: 24, className: "mr-3" })}
+        <h3 className="text-xl font-bold text-text">{contest.name}</h3>
       </div>
-      <button
-        className="w-full mt-6 bg-accent hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
-        onClick={handleFetchWinners}
-      >
-        Fetch Winners
-      </button>
+      <div className="text-gray-400 space-y-2">
+        <p>{contest.winners} winners</p>
+        <p>{contest.prize} USDT</p>
+      </div>
     </div>
-
-    {fetchedWinners.length > 0 && (
-      <div className="bg-primary p-6 rounded-lg shadow-lg">
-        <h3 className="text-xl font-semibold mb-4">Winning Tickets (Contest {selectedContestType}, Round {selectedRound})</h3>
-        <ul className="space-y-2">
-          {fetchedWinners.map(tid => (
-            <li key={tid} className="p-3 bg-secondary rounded-lg font-mono">Ticket #{tid.toString()}</li>
-          ))}
-        </ul>
-      </div>
-    )}
   </div>
 );
 
+const Contest = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-4xl font-bold mb-8 text-center">All Contests</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {contests.map(contest => (
+          <ContestCard key={contest.id} contest={contest} navigate={navigate} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default Contest;
+

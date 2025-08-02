@@ -5,11 +5,10 @@ import Sidebar from './components/Sidebar';
 import Home from './components/Home';
 import Contest from './components/Contest';
 import Admin from './components/Admin';
+import ContestDetail from './components/ContestDetail';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
-
-const CONTRACT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
-const USDT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+import { LOTTERY_ADDRESS } from './constants';
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -19,10 +18,6 @@ const App = () => {
   const [referralCode, setReferralCode] = useState('');
   const [userData, setUserData] = useState(null);
   const [userTickets, setUserTickets] = useState([]);
-  const [winningTickets, setWinningTickets] = useState([]);
-  const [selectedContestType, setSelectedContestType] = useState('0');
-  const [selectedRound, setSelectedRound] = useState('0');
-  const [fetchedWinners, setFetchedWinners] = useState([]);
 
   const connectWallet = async () => {
     try {
@@ -35,16 +30,15 @@ const App = () => {
       const address = accounts[0];
       setWeb3(web3Instance);
       setWalletAddress(address);
-      const contract = new web3Instance.eth.Contract(lotteryAbi, CONTRACT_ADDRESS);
+      const contract = new web3Instance.eth.Contract(lotteryAbi, LOTTERY_ADDRESS);
       setLotteryContract(contract);
-      console.log('Available contract methods:', Object.keys(contract.methods));
       const user = await contract.methods.getUser(address).call();
+      console.log('User data:', user);
       if (user.referrer !== '0x0000000000000000000000000000000000000000') {
         setIsRegistered(true);
         setUserData(user);
         const tickets = await contract.methods.getUserTickets(address).call();
         setUserTickets(tickets);
-        //fetchWinningTickets(contract);
       }
     } catch (error) {
       console.error('MetaMask connection failed:', error);
@@ -52,29 +46,8 @@ const App = () => {
     }
   };
 
-  // const fetchWinningTickets = async (contractInstance = lotteryContract) => {
-  //   // try {
-  //   //   const winners = await contractInstance.methods.getWinningTickets().call();
-  //   //   setWinningTickets(winners.map(Number));
-  //   // } catch (err) {
-  //   //   console.error('Error fetching winning tickets', err);
-  //   // }
-  // };
-
-  const handleFetchWinners = async () => {
-    try {
-      const winners = await lotteryContract.methods.getWinners(selectedContestType, selectedRound).call();
-      setFetchedWinners(winners.map(w => w.ticketId));
-    } catch (err) {
-      console.error('Error fetching winners:', err);
-      setFetchedWinners([]);
-      alert('No winners found for this contest and round.');
-    }
-  };
-
   const handleBuyTicket = async (referralTicketId) => {
     try {
-      const ticketPrice = web3.utils.toWei('10', 'ether');
       if (!referralTicketId || referralTicketId.trim() === "") {
         alert('Referral ticket ID is required.');
         return;
@@ -92,69 +65,10 @@ const App = () => {
       setIsRegistered(user.referrer !== '0x0000000000000000000000000000000000000000');
       setUserData(user);
       setUserTickets(tickets);
-      // fetchWinningTickets();
     } catch (error) {
       console.error('Transaction error:', error);
       const revertReason = error?.data?.message || error?.data?.originalError?.message || error?.message;
       alert(revertReason || 'Transaction failed');
-    }
-  };
-
-  const checkUSDTBalance = async () => {
-    try {
-      const usdt = new web3.eth.Contract([
-        {
-          constant: true,
-          inputs: [{ name: "_owner", type: "address" }],
-          name: "balanceOf",
-          outputs: [{ name: "balance", type: "uint256" }],
-          type: "function"
-        }
-      ], USDT_ADDRESS);
-      const balance = await usdt.methods.balanceOf(walletAddress).call();
-      alert(`USDT Balance: ${web3.utils.fromWei(balance, 'ether')} USDT`);
-    } catch (err) {
-      alert('Error fetching USDT balance.');
-      console.error(err);
-    }
-  };
-
-  const checkUSDTAllowance = async () => {
-    try {
-      const usdt = new web3.eth.Contract([
-        {
-          constant: true,
-          inputs: [{ name: "_owner", type: "address" }, { name: "_spender", type: "address" }],
-          name: "allowance",
-          outputs: [{ name: "remaining", type: "uint256" }],
-          type: "function"
-        }
-      ], USDT_ADDRESS);
-      const allowance = await usdt.methods.allowance(walletAddress, CONTRACT_ADDRESS).call();
-      alert(`USDT Allowance: ${web3.utils.fromWei(allowance, 'ether')} USDT`);
-    } catch (err) {
-      alert('Error checking USDT allowance.');
-      console.error(err);
-    }
-  };
-
-  const approveUSDT = async () => {
-    try {
-      const ticketPrice = web3.utils.toWei('10', 'ether');
-      const usdt = new web3.eth.Contract([
-        {
-          constant: false,
-          inputs: [{ name: "_spender", type: "address" }, { name: "_value", type: "uint256" }],
-          name: "approve",
-          outputs: [{ name: "", type: "bool" }],
-          type: "function"
-        }
-      ], USDT_ADDRESS);
-      await usdt.methods.approve(CONTRACT_ADDRESS, ticketPrice).send({ from: walletAddress });
-      alert('Approval successful!');
-    } catch (err) {
-      alert('Approval failed.');
-      console.error(err);
     }
   };
 
@@ -168,29 +82,17 @@ const App = () => {
               <Home
                 walletAddress={walletAddress}
                 connectWallet={connectWallet}
-                checkUSDTBalance={checkUSDTBalance}
-                checkUSDTAllowance={checkUSDTAllowance}
-                approveUSDT={approveUSDT}
                 referralCode={referralCode}
                 setReferralCode={setReferralCode}
                 handleBuyTicket={handleBuyTicket}
                 isRegistered={isRegistered}
                 userData={userData}
                 userTickets={userTickets}
-                winningTickets={winningTickets}
                 web3={web3}
               />
             } />
-            <Route path="/contest" element={
-              <Contest
-                selectedContestType={selectedContestType}
-                setSelectedContestType={setSelectedContestType}
-                selectedRound={selectedRound}
-                setSelectedRound={setSelectedRound}
-                handleFetchWinners={handleFetchWinners}
-                fetchedWinners={fetchedWinners}
-              />
-            } />
+            <Route path="/contest" element={<Contest />} />
+            <Route path="/contest/:id" element={<ContestDetail lotteryContract={lotteryContract} />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </div>

@@ -1,13 +1,11 @@
 import { ethers } from 'ethers';
 import lotteryABI from '../abi/lotteryAbi.json';
-
-const lotteryAddress = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
-const usdtAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+import { LOTTERY_ADDRESS, USDT_ADDRESS } from '../constants';
 
 export const getContracts = (provider) => {
   const signer = provider.getSigner();
-  const lottery = new ethers.Contract(lotteryAddress, lotteryABI, signer);
-  const usdt = new ethers.Contract(usdtAddress, [
+  const lottery = new ethers.Contract(LOTTERY_ADDRESS, lotteryABI, signer);
+  const usdt = new ethers.Contract(USDT_ADDRESS, [
         {
           constant: false,
           inputs: [{ name: "_spender", type: "address" }, { name: "_value", type: "uint256" }],
@@ -18,3 +16,4 @@ export const getContracts = (provider) => {
       ], signer);
   return { lottery, usdt };
 };
+
