@@ -11,6 +11,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "@heroicons/react": "^2.0.18",
     "framer-motion": "^12.23.3",
     "lucide-react": "^0.535.0",
     "react": "^19.1.0",

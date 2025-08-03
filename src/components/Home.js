@@ -1,16 +1,4 @@
 import React from 'react';
-import { Wallet, Ticket, DollarSign, Users } from 'lucide-react';
-
-const 
-StatCard = ({ icon, label, value }) => (
-  <div className="bg-secondary p-4 rounded-lg flex items-center hover:scale-105 transition-transform duration-300">
-    <div className="p-3 rounded-full bg-background mr-4">{icon}</div>
-    <div>
-      <p className="text-gray-400 text-sm">{label}</p>
-      <p className="text-lg font-semibold break-all">{value}</p>
-    </div>
-  </div>
-);
 
 const Home = ({
   walletAddress,
@@ -23,7 +11,6 @@ const Home = ({
   userTickets,
   web3
 }) => {
-  const formatAddress = (addr) => addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : 'None';
 
   return (
     <div className="space-y-8">
@@ -39,7 +26,7 @@ const Home = ({
         </div>
       )}
 
-      {walletAddress && (
+      {walletAddress && userTickets.length === 0 && (
         <div className="bg-primary p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Buy Ticket</h2>
           <div className="flex flex-col space-y-4">
@@ -58,29 +45,28 @@ const Home = ({
       )}
 
       {walletAddress && isRegistered && userData && (
-        <div className="bg-primary p-8 rounded-2xl shadow-2xl">
-          <h2 className="text-3xl font-bold mb-8 text-center">Your Stats</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <StatCard
-              icon={<Wallet size={24} className="text-accent" />}
-              label="Wallet Address"
-              value={formatAddress(walletAddress)}
-            />
-            <StatCard
-              icon={<Ticket size={24} className="text-accent" />}
-              label="1st Ticket ID"
-              value={userTickets.length > 0 ? userTickets[0] : 'None'}
-            />
-            <StatCard
-              icon={<DollarSign size={24} className="text-accent" />}
-              label="Total Earnings"
-              value={`${web3.utils.fromWei(userData?.[5] || '0', 'ether')} USDT`}
-            />
-            <StatCard
-              icon={<Users size={24} className="text-accent" />}
-              label="Pair Count"
-              value={userData?.[4]?.toString() || '0'}
-            />
+        <div className="bg-gradient-to-br from-blue-900 via-gray-900 to-indigo-900 p-8 rounded-2xl shadow-2xl text-white font-mono max-w-2xl mx-auto transform hover:scale-105 transition-transform duration-300">
+          <div className="flex justify-between items-start mb-6">
+            <h3 className="text-2xl font-bold tracking-wider">Crypto Lottery</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300 opacity-80"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+          </div>
+          <div className="mb-6">
+            <p className="text-gray-400 text-sm mb-1">Your Ticket ID</p>
+            <p className="text-4xl font-semibold tracking-widest">{userTickets.length > 0 ? userTickets[0] : 'Not Registered'}</p>
+          </div>
+          <div className="mb-6">
+            <p className="text-gray-400 text-xs uppercase tracking-wider">Wallet Address</p>
+            <p className="font-medium text-lg">{walletAddress}</p>
+          </div>
+          <div className="flex justify-between items-end">
+            <div>
+              <p className="text-gray-400 text-xs uppercase tracking-wider">Pairs Matched</p>
+              <p className="font-semibold text-base">{userData?.[4]?.toString() || '0'}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-gray-400 text-xs uppercase tracking-wider">Total Earnings</p>
+              <p className="font-semibold text-2xl text-green-400">{`${web3.utils.fromWei(userData?.[5] || '0', 'ether')} USDT`}</p>
+            </div>
           </div>
         </div>
       )}

@@ -9,6 +9,7 @@ import ContestDetail from './components/ContestDetail';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS } from './constants';
+import { useToast } from './contexts/ToastContext';
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -18,11 +19,12 @@ const App = () => {
   const [referralCode, setReferralCode] = useState('');
   const [userData, setUserData] = useState(null);
   const [userTickets, setUserTickets] = useState([]);
+  const { showToast } = useToast();
 
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        alert('MetaMask not found. Please install it.');
+        showToast('MetaMask not found. Please install it.', 'error');
         return;
       }
       const web3Instance = new Web3(window.ethereum);
@@ -40,26 +42,27 @@ const App = () => {
         const tickets = await contract.methods.getUserTickets(address).call();
         setUserTickets(tickets);
       }
+      showToast('Wallet connected successfully!', 'success');
     } catch (error) {
       console.error('MetaMask connection failed:', error);
-      alert('Wallet connection failed.');
+      showToast('Wallet connection failed.', 'error');
     }
   };
 
   const handleBuyTicket = async (referralTicketId) => {
     try {
       if (!referralTicketId || referralTicketId.trim() === "") {
-        alert('Referral ticket ID is required.');
+        showToast('Referral ticket ID is required.', 'error');
         return;
       }
       const referralTicket = await lotteryContract.methods.getTicket(referralTicketId).call();
       if (referralTicket[1] === '0x0000000000000000000000000000000000000000') {
-        alert('Referral ticket does not exist.');
+        showToast('Referral ticket does not exist.', 'error');
         return;
       }
       console.log(`Buying ticket with referral ID: ${referralTicketId}`);
       await lotteryContract.methods.buyTicket(referralTicketId).send({ from: walletAddress });
-      alert('🎉 Ticket purchased successfully!');
+      showToast('🎉 Ticket purchased successfully!', 'success');
       const user = await lotteryContract.methods.getUser(walletAddress).call();
       const tickets = await lotteryContract.methods.getUserTickets(walletAddress).call();
       setIsRegistered(user.referrer !== '0x0000000000000000000000000000000000000000');
@@ -68,13 +71,13 @@ const App = () => {
     } catch (error) {
       console.error('Transaction error:', error);
       const revertReason = error?.data?.message || error?.data?.originalError?.message || error?.message;
-      alert(revertReason || 'Transaction failed');
+      showToast(revertReason || 'Transaction failed', 'error');
     }
   };
 
   return (
     <Router>
-      <div className="flex min-h-screen bg-background text-text">
+      <div className="flex min-h-screen text-text">
         <Sidebar />
         <div className="flex-grow p-8">
           <Routes>
