@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import Web3 from 'web3';
 import { getContracts } from '../utils/contract';
 import { Ticket, DollarSign, Users, Award, Check, X } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import WinnerSelectionDialog from './WinnerSelectionDialog';
 
 const Admin = () => {
   const [password, setPassword] = useState('');
@@ -9,17 +11,19 @@ const Admin = () => {
   const [lotteryContract, setLotteryContract] = useState(null);
   const [ownerTicketGenerated, setOwnerTicketGenerated] = useState(false);
   const [ownerTicketId, setOwnerTicketId] = useState("");
+  const [isWinnerSelectionOpen, setIsWinnerSelectionOpen] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const init = async () => {
       if (window.ethereum) {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const { lottery } = getContracts(provider);
+        const web3Instance = new Web3(window.ethereum);
+        const { lottery } = getContracts(web3Instance);
         setLotteryContract(lottery);
-        const ownerTicketGenerated = await lottery.ownerTicketGenerated();
+        const ownerTicketGenerated = await lottery.methods.ownerTicketGenerated().call();
         setOwnerTicketGenerated(ownerTicketGenerated);
         if (ownerTicketGenerated) {
-          const ownerTicketId = await lottery.ownerTicketId();
+          const ownerTicketId = await lottery.methods.ownerTicketId().call();
           setOwnerTicketId(ownerTicketId);
         }
       }
@@ -31,22 +35,22 @@ const Admin = () => {
     if (password === 'admin123') {
       setLoggedIn(true);
     } else {
-      alert('Incorrect password');
+      showToast('Incorrect password', 'error');
     }
   };
 
   const handleGenerateTicket = async () => {
     if (lotteryContract) {
       try {
-        const tx = await lotteryContract.generateOwnerTicket();
-        await tx.wait();
-        alert('Owner ticket generated successfully!');
-        const ownerTicketId = await lotteryContract.ownerTicketId();
+        showToast('Please approve the transaction in your wallet.', 'info');
+        await lotteryContract.methods.generateOwnerTicket().send({ from: window.ethereum.selectedAddress });
+        showToast('Owner ticket generated successfully!', 'success');
+        const ownerTicketId = await lotteryContract.methods.ownerTicketId().call();
         setOwnerTicketId(ownerTicketId);
         setOwnerTicketGenerated(true);
       } catch (error) {
         console.error('Error generating owner ticket:', error);
-        alert('Failed to generate owner ticket.');
+        showToast('Failed to generate owner ticket.', 'error');
       }
     }
   };
@@ -77,7 +81,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="flex bg-gray-900 text-white">
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -94,19 +98,27 @@ const Admin = () => {
             </div>
             <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
               <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
-              {ownerTicketGenerated ? (
-                <div>
-                  <p className="text-lg">Owner Ticket ID:</p>
-                  <p className="p-3 bg-gray-700 rounded-lg font-mono">{ownerTicketId.toString()}</p>
-                </div>
-              ) : (
+              <div className="space-y-4">
+                {ownerTicketGenerated ? (
+                  <div>
+                    <p className="text-lg">Owner Ticket ID:</p>
+                    <p className="p-3 bg-gray-700 rounded-lg font-mono">{ownerTicketId.toString()}</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleGenerateTicket}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 w-full"
+                  >
+                    Generate Owner Ticket
+                  </button>
+                )}
                 <button
-                  onClick={handleGenerateTicket}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
+                  onClick={() => setIsWinnerSelectionOpen(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 w-full"
                 >
-                  Generate Owner Ticket
+                  Select Winners
                 </button>
-              )}
+              </div>
             </div>
           </div>
 
@@ -121,6 +133,13 @@ const Admin = () => {
           </div>
         </main>
       </div>
+      {lotteryContract && (
+        <WinnerSelectionDialog
+          isOpen={isWinnerSelectionOpen}
+          onClose={() => setIsWinnerSelectionOpen(false)}
+          lotteryContract={lotteryContract}
+        />
+      )}
     </div>
   );
 };
@@ -180,7 +199,6 @@ const PayoutRequests = () => (
         </button>
       </div>
     </div>
-    {/* ... more requests */}
   </div>
 );
 
@@ -211,7 +229,6 @@ const UserTable = () => (
                     <td className="p-3 text-center">4</td>
                     <td className="p-3">250.00</td>
                 </tr>
-                {/* ... more rows */}
             </tbody>
         </table>
     </div>

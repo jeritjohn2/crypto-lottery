@@ -5,7 +5,8 @@ import Sidebar from './components/Sidebar';
 import Home from './components/Home';
 import Contest from './components/Contest';
 import Admin from './components/Admin';
-import ContestDetail from './components/ContestDetail';
+
+import Winners from './components/Winners';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS } from './constants';
@@ -61,6 +62,7 @@ const App = () => {
         return;
       }
       console.log(`Buying ticket with referral ID: ${referralTicketId}`);
+      showToast('Please approve the transaction in your wallet.', 'info');
       await lotteryContract.methods.buyTicket(referralTicketId).send({ from: walletAddress });
       showToast('🎉 Ticket purchased successfully!', 'success');
       const user = await lotteryContract.methods.getUser(walletAddress).call();
@@ -77,9 +79,9 @@ const App = () => {
 
   return (
     <Router>
-      <div className="flex min-h-screen text-text">
+      <div className="flex h-screen bg-background text-text">
         <Sidebar />
-        <div className="flex-grow p-8">
+        <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
             <Route path="/" element={
               <Home
@@ -95,14 +97,13 @@ const App = () => {
               />
             } />
             <Route path="/contest" element={<Contest />} />
-            <Route path="/contest/:id" element={<ContestDetail lotteryContract={lotteryContract} />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/winners" element={<Winners lotteryContract={lotteryContract} />} />
           </Routes>
-        </div>
+        </main>
       </div>
     </Router>
   );
 };
 
 export default App;
-

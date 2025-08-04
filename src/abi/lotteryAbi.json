@@ -257,6 +257,25 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "enum CryptoLottery.ContestType",
+          "name": "contestType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getWinnersByContest",
+      "outputs": [
+        {
+          "internalType": "string[]",
+          "name": "",
+          "type": "string[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "owner",
       "outputs": [
@@ -337,6 +356,24 @@
     {
       "inputs": [],
       "name": "requestPayout",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum CryptoLottery.ContestType",
+          "name": "contestType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "numberOfWinners",
+          "type": "uint256"
+        }
+      ],
+      "name": "selectWinners",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

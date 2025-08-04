@@ -4,7 +4,11 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 interface IERC20 {
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
     function transfer(address to, uint256 amount) external returns (bool);
 }
 
@@ -30,9 +34,16 @@ contract CryptoLottery {
     }
 
     enum ContestType {
-        Weekly, Monthly, Quarterly, HalfYearly,
-        GrandFirst, GrandSecond, GrandThird,
-        GrandFourth, GrandFifth, GrandSixth
+        Weekly,
+        Monthly,
+        Quarterly,
+        HalfYearly,
+        GrandFirst,
+        GrandSecond,
+        GrandThird,
+        GrandFourth,
+        GrandFifth,
+        GrandSixth
     }
 
     IERC20 public usdt;
@@ -60,8 +71,16 @@ contract CryptoLottery {
     uint256 public constant TICKET_PRICE = 1e19;
 
     event Registered(address indexed user, address indexed referrer);
-    event TicketPurchased(address indexed user, string ticketId, uint256 amount);
-    event PayoutRequested(address indexed user, uint256 amount, uint256 serviceFee);
+    event TicketPurchased(
+        address indexed user,
+        string ticketId,
+        uint256 amount
+    );
+    event PayoutRequested(
+        address indexed user,
+        uint256 amount,
+        uint256 serviceFee
+    );
 
     constructor(address _usdt, address _wallet) {
         owner = msg.sender;
@@ -74,10 +93,16 @@ contract CryptoLottery {
         serviceWallet = _wallet;
 
         users[msg.sender] = User({
-            referrer: address(0), level1: address(0), level2: address(0), level3: address(0),
-            pairs: 0, earnings: 0,
-            leftChild: address(0), rightChild: address(0),
-            leftCount: 0, rightCount: 0
+            referrer: address(0),
+            level1: address(0),
+            level2: address(0),
+            level3: address(0),
+            pairs: 0,
+            earnings: 0,
+            leftChild: address(0),
+            rightChild: address(0),
+            leftCount: 0,
+            rightCount: 0
         });
         userList.push(msg.sender);
     }
@@ -121,8 +146,10 @@ contract CryptoLottery {
             users[referrer].leftCount = countTeam(left);
             users[referrer].rightCount = countTeam(right);
 
-            uint256 minPairs = users[referrer].leftCount < users[referrer].rightCount ?
-                               users[referrer].leftCount : users[referrer].rightCount;
+            uint256 minPairs = users[referrer].leftCount <
+                users[referrer].rightCount
+                ? users[referrer].leftCount
+                : users[referrer].rightCount;
 
             uint256 newPairs = minPairs - users[referrer].pairs;
             if (newPairs > 0) {
@@ -136,14 +163,23 @@ contract CryptoLottery {
 
     function countTeam(address node) internal view returns (uint256) {
         if (node == address(0)) return 0;
-        return 1 + countTeam(users[node].leftChild) + countTeam(users[node].rightChild);
+        return
+            1 +
+            countTeam(users[node].leftChild) +
+            countTeam(users[node].rightChild);
     }
 
     function buyTicket(string memory referralTicketId) external {
         require(msg.sender != owner, "Owner cannot buy ticket");
         require(!userHasPurchasedTicket[msg.sender], "Already purchased");
-        require(bytes(referralTicketId).length > 0, "Referral ticket ID required");
-        require(tickets[referralTicketId].buyer != address(0), "Invalid referral");
+        require(
+            bytes(referralTicketId).length > 0,
+            "Referral ticket ID required"
+        );
+        require(
+            tickets[referralTicketId].buyer != address(0),
+            "Invalid referral"
+        );
 
         address referrerAddr = tickets[referralTicketId].buyer;
         require(referrerAddr != msg.sender, "Cannot refer yourself");
@@ -174,9 +210,55 @@ contract CryptoLottery {
             numberStr = string(abi.encodePacked("0", numberStr));
         }
 
-        string memory fullId = string(abi.encodePacked("CL252", numberStr, suffix));
+        string memory fullId = string(
+            abi.encodePacked("CL252", numberStr, suffix)
+        );
         ticketNumber++;
         return fullId;
+    }
+    function selectWinners(
+        ContestType contestType,
+        uint256 numberOfWinners
+    ) external {
+        uint256 totalTickets = allTickets.length;
+
+        if (numberOfWinners >= totalTickets) {
+            selectedWinners[contestType] = allTickets;
+            return;
+        }
+
+        string[] memory winners = new string[](numberOfWinners);
+        bool[] memory selected = new bool[](totalTickets); // local flag array to track used indices
+
+        for (uint256 i = 0; i < numberOfWinners; i++) {
+            uint256 rand;
+            do {
+                rand =
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                block.timestamp,
+                                block.prevrandao,
+                                msg.sender,
+                                i,
+                                block.number
+                            )
+                        )
+                    ) %
+                    totalTickets;
+            } while (selected[rand]);
+
+            selected[rand] = true;
+            winners[i] = allTickets[rand];
+        }
+
+        selectedWinners[contestType] = winners;
+    }
+
+    function getWinnersByContest(
+        ContestType contestType
+    ) external view returns (string[] memory) {
+        return selectedWinners[contestType];
     }
 
     function distributeCommission(address user) internal {
@@ -184,9 +266,12 @@ contract CryptoLottery {
         address ref2 = users[user].level2;
         address ref3 = users[user].level3;
 
-        if (ref1 != address(0)) users[ref1].earnings += (TICKET_PRICE * 10) / 100;
-        if (ref2 != address(0)) users[ref2].earnings += (TICKET_PRICE * 2) / 100;
-        if (ref3 != address(0)) users[ref3].earnings += (TICKET_PRICE * 1) / 100;
+        if (ref1 != address(0))
+            users[ref1].earnings += (TICKET_PRICE * 10) / 100;
+        if (ref2 != address(0))
+            users[ref2].earnings += (TICKET_PRICE * 2) / 100;
+        if (ref3 != address(0))
+            users[ref3].earnings += (TICKET_PRICE * 1) / 100;
     }
 
     function generateOwnerTicket() external {
@@ -211,25 +296,48 @@ contract CryptoLottery {
         emit PayoutRequested(msg.sender, finalAmount, serviceFee);
     }
 
-    function getUser(address user) external view returns (
-        address, address, address, address,
-        uint256, uint256, address, address,
-        uint256, uint256
-    ) {
+    function getUser(
+        address user
+    )
+        external
+        view
+        returns (
+            address,
+            address,
+            address,
+            address,
+            uint256,
+            uint256,
+            address,
+            address,
+            uint256,
+            uint256
+        )
+    {
         User memory u = users[user];
         return (
-            u.referrer, u.level1, u.level2, u.level3,
-            u.pairs, u.earnings, u.leftChild, u.rightChild,
-            u.leftCount, u.rightCount
+            u.referrer,
+            u.level1,
+            u.level2,
+            u.level3,
+            u.pairs,
+            u.earnings,
+            u.leftChild,
+            u.rightChild,
+            u.leftCount,
+            u.rightCount
         );
     }
-    function getUserTickets(address user) external view returns (string[] memory) {
-    return userTickets[user];
-}
+    function getUserTickets(
+        address user
+    ) external view returns (string[] memory) {
+        return userTickets[user];
+    }
 
-function getTicket(string memory ticketId) external view returns (string memory, address) {
-    Ticket memory t = tickets[ticketId];
-    return (t.ticketId, t.buyer);
-}
-
+    function getTicket(
+        string memory ticketId
+    ) external view returns (string memory, address) {
+        Ticket memory t = tickets[ticketId];
+        return (t.ticketId, t.buyer);
+    }
 }

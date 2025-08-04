@@ -1,11 +1,10 @@
-import { ethers } from 'ethers';
+
 import lotteryABI from '../abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS, USDT_ADDRESS } from '../constants';
 
-export const getContracts = (provider) => {
-  const signer = provider.getSigner();
-  const lottery = new ethers.Contract(LOTTERY_ADDRESS, lotteryABI, signer);
-  const usdt = new ethers.Contract(USDT_ADDRESS, [
+export const getContracts = (web3) => {
+  const lottery = new web3.eth.Contract(lotteryABI, LOTTERY_ADDRESS);
+  const usdt = new web3.eth.Contract([
         {
           constant: false,
           inputs: [{ name: "_spender", type: "address" }, { name: "_value", type: "uint256" }],
@@ -13,7 +12,7 @@ export const getContracts = (provider) => {
           outputs: [{ name: "", type: "bool" }],
           type: "function"
         }
-      ], signer);
+      ], USDT_ADDRESS);
   return { lottery, usdt };
 };
 
