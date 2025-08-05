@@ -71,16 +71,15 @@ contract CryptoLottery {
     uint256 public constant TICKET_PRICE = 1e19;
 
     event Registered(address indexed user, address indexed referrer);
-    event TicketPurchased(
+    event TicketPurchased(address indexed user, string ticketId, address referrer, uint256 amount);
+    event ReferralCommission(
         address indexed user,
-        string ticketId,
+        address indexed fromUser,
+        uint256 level,
         uint256 amount
     );
-    event PayoutRequested(
-        address indexed user,
-        uint256 amount,
-        uint256 serviceFee
-    );
+    event WinnerSelected(ContestType contest, string ticketId, address winner);
+    event PayoutProcessed(address indexed user, uint256 amount, uint256 serviceFee);
 
     constructor(address _usdt, address _wallet) {
         owner = msg.sender;
@@ -154,7 +153,9 @@ contract CryptoLottery {
             uint256 newPairs = minPairs - users[referrer].pairs;
             if (newPairs > 0) {
                 users[referrer].pairs += newPairs;
-                users[referrer].earnings += (TICKET_PRICE * 2 * newPairs) / 100;
+                uint256 commission = (TICKET_PRICE * 2 * newPairs) / 100;
+                users[referrer].earnings += commission;
+                emit ReferralCommission(referrer, msg.sender, 0, commission);
             }
 
             referrer = users[referrer].referrer;
@@ -196,7 +197,7 @@ contract CryptoLottery {
         allTickets.push(newTicketId);
         userHasPurchasedTicket[msg.sender] = true;
 
-        emit TicketPurchased(msg.sender, newTicketId, TICKET_PRICE);
+        emit TicketPurchased(msg.sender, newTicketId, referrerAddr, TICKET_PRICE);
     }
 
     function generateTicketId() internal returns (string memory) {
@@ -224,6 +225,9 @@ contract CryptoLottery {
 
         if (numberOfWinners >= totalTickets) {
             selectedWinners[contestType] = allTickets;
+            for (uint256 i = 0; i < totalTickets; i++) {
+                emit WinnerSelected(contestType, allTickets[i], tickets[allTickets[i]].buyer);
+            }
             return;
         }
 
@@ -250,6 +254,7 @@ contract CryptoLottery {
 
             selected[rand] = true;
             winners[i] = allTickets[rand];
+            emit WinnerSelected(contestType, allTickets[rand], tickets[allTickets[rand]].buyer);
         }
 
         selectedWinners[contestType] = winners;
@@ -266,12 +271,21 @@ contract CryptoLottery {
         address ref2 = users[user].level2;
         address ref3 = users[user].level3;
 
-        if (ref1 != address(0))
-            users[ref1].earnings += (TICKET_PRICE * 10) / 100;
-        if (ref2 != address(0))
-            users[ref2].earnings += (TICKET_PRICE * 2) / 100;
-        if (ref3 != address(0))
-            users[ref3].earnings += (TICKET_PRICE * 1) / 100;
+        if (ref1 != address(0)) {
+            uint256 commission = (TICKET_PRICE * 10) / 100;
+            users[ref1].earnings += commission;
+            emit ReferralCommission(ref1, user, 1, commission);
+        }
+        if (ref2 != address(0)) {
+            uint256 commission = (TICKET_PRICE * 2) / 100;
+            users[ref2].earnings += commission;
+            emit ReferralCommission(ref2, user, 2, commission);
+        }
+        if (ref3 != address(0)) {
+            uint256 commission = (TICKET_PRICE * 1) / 100;
+            users[ref3].earnings += commission;
+            emit ReferralCommission(ref3, user, 3, commission);
+        }
     }
 
     function generateOwnerTicket() external {
@@ -282,7 +296,7 @@ contract CryptoLottery {
         allTickets.push(ownerTicketId);
         ownerTicketGenerated = true;
         userHasPurchasedTicket[msg.sender] = true;
-        emit TicketPurchased(msg.sender, ownerTicketId, 0);
+        emit TicketPurchased(msg.sender, ownerTicketId, address(0), 0);
     }
 
     function requestPayout() external {
@@ -293,7 +307,7 @@ contract CryptoLottery {
         users[msg.sender].earnings = 0;
         require(usdt.transfer(serviceWallet, serviceFee), "Fee failed");
         require(usdt.transfer(msg.sender, finalAmount), "Payout failed");
-        emit PayoutRequested(msg.sender, finalAmount, serviceFee);
+        emit PayoutProcessed(msg.sender, finalAmount, serviceFee);
     }
 
     function getUser(

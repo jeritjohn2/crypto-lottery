@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import { getContracts } from '../utils/contract';
-import { Ticket, DollarSign, Users, Award, Check, X } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import WinnerSelectionDialog from './WinnerSelectionDialog';
+import { TransactionTable, TransactionModal } from './TransactionComponents';
+import { Ticket, DollarSign, Users, Award, Check, X } from 'lucide-react';
 
 const Admin = () => {
   const [password, setPassword] = useState('');
@@ -12,6 +13,9 @@ const Admin = () => {
   const [ownerTicketGenerated, setOwnerTicketGenerated] = useState(false);
   const [ownerTicketId, setOwnerTicketId] = useState("");
   const [isWinnerSelectionOpen, setIsWinnerSelectionOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [filterType, setFilterType] = useState('All'); // New state for filter
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -26,6 +30,76 @@ const Admin = () => {
           const ownerTicketId = await lottery.methods.ownerTicketId().call();
           setOwnerTicketId(ownerTicketId);
         }
+
+        // Fetch past events
+        const fetchedTransactions = [];
+
+        const allEvents = await lottery.getPastEvents('allEvents', {
+          fromBlock: 0,
+          toBlock: 'latest'
+        });
+
+        for (const event of allEvents) {
+          const block = await web3Instance.eth.getBlock(event.blockNumber);
+          const timestamp = new Date(Number(block.timestamp) * 1000).toLocaleString();
+
+          switch (event.event) {
+            case 'TicketPurchased':
+              fetchedTransactions.push({
+                type: 'Ticket Purchase',
+                user: event.returnValues.user,
+                amount: `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT`,
+                time: timestamp,
+                details: {
+                  ticketId: event.returnValues.ticketId,
+                  referrer: event.returnValues.referrer,
+                },
+              });
+              break;
+            case 'ReferralCommission':
+              fetchedTransactions.push({
+                type: 'Referral Commission',
+                user: event.returnValues.user,
+                amount: `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT`,
+                time: timestamp,
+                details: {
+                  fromUser: event.returnValues.fromUser,
+                  level: event.returnValues.level,
+                },
+              });
+              break;
+            case 'WinnerSelected':
+              fetchedTransactions.push({
+                type: 'Winner',
+                user: event.returnValues.winner,
+                amount: 'N/A',
+                time: timestamp,
+                details: {
+                  ticketId: event.returnValues.ticketId,
+                  contestType: event.returnValues.contest,
+                },
+              });
+              break;
+            case 'PayoutProcessed':
+              fetchedTransactions.push({
+                type: 'Payout',
+                user: event.returnValues.user,
+                amount: `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT`,
+                time: timestamp,
+                details: {
+                  serviceFee: `${web3Instance.utils.fromWei(event.returnValues.serviceFee, 'ether')} USDT`,
+                  status: 'Processed',
+                },
+              });
+              break;
+            default:
+              break;
+          }
+        }
+
+        // Sort transactions by time, newest first
+        fetchedTransactions.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        setTransactions(fetchedTransactions);
       }
     };
     init();
@@ -84,21 +158,18 @@ const Admin = () => {
     <div className="flex bg-gray-900 text-white">
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <StatCard icon={<Ticket size={28} className="text-blue-500" />} title="Total Tickets Sold" value="10,482" />
-            <StatCard icon={<DollarSign size={28} className="text-blue-500" />} title="Total USDT Collected" value="$35,721" />
-            <StatCard icon={<Users size={28} className="text-blue-500" />} title="Total Users" value="1,250" />
-            <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value="128" />
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h2 className="text-xl font-semibold mb-4">Recent Ticket Purchases</h2>
-              <TicketTable />
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4">
+                <StatCard icon={<Ticket size={28} className="text-blue-500" />} title="Total Tickets Sold" value="10,482" />
+                <StatCard icon={<DollarSign size={28} className="text-blue-500" />} title="Total USDT Collected" value="$35,721" />
+                <StatCard icon={<Users size={28} className="text-blue-500" />} title="Total Users" value="1,250" />
+                <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value="128" />
+              </div>
             </div>
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="lg:col-span-1 bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col">
               <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
-              <div className="space-y-4">
+              <div className="space-y-4 flex-grow">
                 {ownerTicketGenerated ? (
                   <div>
                     <p className="text-lg">Owner Ticket ID:</p>
@@ -123,6 +194,10 @@ const Admin = () => {
           </div>
 
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+            <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} filterType={filterType} setFilterType={setFilterType} />
+          </div>
+
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
             <h2 className="text-xl font-semibold mb-4">Payout Requests</h2>
             <PayoutRequests />
           </div>
@@ -140,6 +215,9 @@ const Admin = () => {
           lotteryContract={lotteryContract}
         />
       )}
+      {selectedTransaction && (
+        <TransactionModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+      )}
     </div>
   );
 };
@@ -153,32 +231,6 @@ const StatCard = ({ icon, title, value }) => (
       <p className="text-sm text-gray-400">{title}</p>
       <p className="text-xl font-bold">{value}</p>
     </div>
-  </div>
-);
-
-const TicketTable = () => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-left">
-      <thead>
-        <tr className="border-b border-gray-700">
-          <th className="p-3">Ticket ID</th>
-          <th className="p-3">Buyer</th>
-          <th className="p-3">Referral</th>
-          <th className="p-3">Time</th>
-          <th className="p-3">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr className="border-b border-gray-700 hover:bg-gray-700/50">
-          <td className="p-3">#12345</td>
-          <td className="p-3 font-mono">0xAbCd...1234</td>
-          <td className="p-3 font-mono">0xEfGh...5678</td>
-          <td className="p-3">10 mins ago</td>
-          <td className="p-3">0.01 USDT</td>
-        </tr>
-        {/* ... more rows */}
-      </tbody>
-    </table>
   </div>
 );
 
