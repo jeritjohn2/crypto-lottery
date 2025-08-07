@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Shield, Home, UserCog, Ticket, Award, DollarSign } from 'lucide-react';
+import { Shield, Home, UserCog, Ticket, Award, DollarSign, GitMerge } from 'lucide-react';
 
 const Sidebar = () => (
   <div className="w-64 bg-gray-800 p-6 flex flex-col shadow-lg">
@@ -11,7 +11,8 @@ const Sidebar = () => (
       <SidebarLink icon={<Home size={20} />} text="Home" to="/" />
       <SidebarLink icon={<Ticket size={20} />} text="All Contests" to="/contest" />
       <SidebarLink icon={<Award size={20} />} text="Winners" to="/winners" />
-      <SidebarLink icon={<DollarSign size={20} />} text="Payout Requests" to="/payouts" />
+      <SidebarLink icon={<DollarSign size={20} />} text="Payout" to="/payout" />
+      <SidebarLink icon={<GitMerge size={20} />} text="Referral Tree" to="/referral-tree" />
       <SidebarLink icon={<UserCog size={20} />} text="Admin" to="/admin" />
     </nav>
   </div>

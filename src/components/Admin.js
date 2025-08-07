@@ -4,7 +4,7 @@ import { getContracts } from '../utils/contract';
 import { useToast } from '../contexts/ToastContext';
 import WinnerSelectionDialog from './WinnerSelectionDialog';
 import { TransactionTable, TransactionModal } from './TransactionComponents';
-import { Ticket, DollarSign, Users, Award, Check, X } from 'lucide-react';
+import { Ticket, DollarSign, Users, Award, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Admin = () => {
   const [password, setPassword] = useState('');
@@ -16,6 +16,12 @@ const Admin = () => {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [filterType, setFilterType] = useState('All'); // New state for filter
+  const [users, setUsers] = useState([]); // New state for users
+  const [totalTicketsSold, setTotalTicketsSold] = useState(0);
+  const [totalUSDTCollected, setTotalUSDTCollected] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalWinners, setTotalWinners] = useState(0);
+  const [payoutRequests, setPayoutRequests] = useState([]);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -31,8 +37,15 @@ const Admin = () => {
           setOwnerTicketId(ownerTicketId);
         }
 
-        // Fetch past events
+        const requests = await lottery.methods.getAllPayoutRequests().call();
+        setPayoutRequests(requests);
+
+        // Fetch past events and user data
         const fetchedTransactions = [];
+        const uniqueUsers = new Set();
+        let ticketsSold = 0;
+                let usdtCollected =web3Instance.utils.toBigInt("0"); // Initialize as BigNumber
+        let winnersCount = 0;
 
         const allEvents = await lottery.getPastEvents('allEvents', {
           fromBlock: 0,
@@ -45,6 +58,8 @@ const Admin = () => {
 
           switch (event.event) {
             case 'TicketPurchased':
+              ticketsSold++;
+              usdtCollected += web3Instance.utils.toBigInt(event.returnValues.amount);
               fetchedTransactions.push({
                 type: 'Ticket Purchase',
                 user: event.returnValues.user,
@@ -55,6 +70,8 @@ const Admin = () => {
                   referrer: event.returnValues.referrer,
                 },
               });
+              uniqueUsers.add(event.returnValues.user);
+              uniqueUsers.add(event.returnValues.referrer);
               break;
             case 'ReferralCommission':
               fetchedTransactions.push({
@@ -67,18 +84,22 @@ const Admin = () => {
                   level: event.returnValues.level,
                 },
               });
+              uniqueUsers.add(event.returnValues.user);
+              uniqueUsers.add(event.returnValues.fromUser);
               break;
             case 'WinnerSelected':
+              winnersCount++;
               fetchedTransactions.push({
                 type: 'Winner',
-                user: event.returnValues.winner,
-                amount: 'N/A',
+                user: event.returnValues.user,
+                amount: event.returnValues.amount ? `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT` : 'N/A',
                 time: timestamp,
                 details: {
                   ticketId: event.returnValues.ticketId,
                   contestType: event.returnValues.contest,
                 },
               });
+              uniqueUsers.add(event.returnValues.winner);
               break;
             case 'PayoutProcessed':
               fetchedTransactions.push({
@@ -88,18 +109,43 @@ const Admin = () => {
                 time: timestamp,
                 details: {
                   serviceFee: `${web3Instance.utils.fromWei(event.returnValues.serviceFee, 'ether')} USDT`,
-                  status: 'Processed',
+                  status: event.returnValues.approved ? 'Approved' : 'Rejected',
                 },
               });
+              uniqueUsers.add(event.returnValues.user);
               break;
             default:
               break;
           }
         }
 
+        // Fetch user data for unique users
+        const fetchedUsers = [];
+        for (const userAddress of Array.from(uniqueUsers)) {
+          try {
+            const userData = await lottery.methods.users(userAddress).call();
+            fetchedUsers.push({
+              address: userAddress,
+              ticketId: userData[0],
+              referrer: userData[1],
+              registrationTime: new Date(Number(userData[2]) * 1000).toLocaleString(),
+              lastActive: new Date(Number(userData[3]) * 1000).toLocaleString(),
+              pairsMatched: userData[4],
+              earnings: web3Instance.utils.fromWei(userData[5], 'ether'),
+            });
+          } catch (error) {
+            console.error(`Error fetching data for user ${userAddress}:`, error);
+          }
+        }
+
         // Sort transactions by time, newest first
         fetchedTransactions.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
         setTransactions(fetchedTransactions);
+        setUsers(fetchedUsers);
+        setTotalTicketsSold(ticketsSold);
+        setTotalUSDTCollected(web3Instance.utils.fromWei(usdtCollected, 'ether'));
+        setTotalUsers(uniqueUsers.size);
+        setTotalWinners(winnersCount);
       }
     };
     init();
@@ -110,6 +156,21 @@ const Admin = () => {
       setLoggedIn(true);
     } else {
       showToast('Incorrect password', 'error');
+    }
+  };
+
+  const handleProcessPayout = async (requestId, approve) => {
+    if (lotteryContract) {
+      try {
+        showToast('Please approve the transaction in your wallet.', 'info');
+        await lotteryContract.methods.processPayout(requestId, approve).send({ from: window.ethereum.selectedAddress });
+        showToast('Payout processed successfully!', 'success');
+        const requests = await lotteryContract.methods.getAllPayoutRequests().call();
+        setPayoutRequests(requests);
+      } catch (error) {
+        console.error('Error processing payout:', error);
+        showToast('Failed to process payout.', 'error');
+      }
     }
   };
 
@@ -161,10 +222,10 @@ const Admin = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4">
-                <StatCard icon={<Ticket size={28} className="text-blue-500" />} title="Total Tickets Sold" value="10,482" />
-                <StatCard icon={<DollarSign size={28} className="text-blue-500" />} title="Total USDT Collected" value="$35,721" />
-                <StatCard icon={<Users size={28} className="text-blue-500" />} title="Total Users" value="1,250" />
-                <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value="128" />
+                <StatCard icon={<Ticket size={28} className="text-blue-500" />} title="Total Tickets Sold" value={totalTicketsSold} />
+                <StatCard icon={<DollarSign size={28} className="text-blue-500" />} title="Total USDT Collected" value={`${parseFloat(totalUSDTCollected).toFixed(2)}`} />
+                <StatCard icon={<Users size={28} className="text-blue-500" />} title="Total Users" value={totalUsers} />
+                <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value={totalWinners} />
               </div>
             </div>
             <div className="lg:col-span-1 bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col">
@@ -199,12 +260,12 @@ const Admin = () => {
 
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
             <h2 className="text-xl font-semibold mb-4">Payout Requests</h2>
-            <PayoutRequests />
+            <PayoutRequests payoutRequests={payoutRequests} handleProcessPayout={handleProcessPayout} />
           </div>
 
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold mb-4">User Stats</h2>
-            <UserTable />
+            <UserTable users={users} />
           </div>
         </main>
       </div>
@@ -234,57 +295,129 @@ const StatCard = ({ icon, title, value }) => (
   </div>
 );
 
-const PayoutRequests = () => (
+const PayoutRequests = ({ payoutRequests, handleProcessPayout }) => (
   <div className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between bg-gray-700/50 p-4 rounded-lg">
-      <div className="mb-2 sm:mb-0">
-        <p className="font-mono">0x1234567890abcdef1234567890abcdef12345678</p>
-        <p className="text-sm text-gray-400">150 USDT</p>
+    {payoutRequests.map((request, index) => (
+      <div key={index} className="flex flex-wrap items-center justify-between bg-gray-700/50 p-4 rounded-lg">
+        <div className="mb-2 sm:mb-0">
+          <p className="font-mono">{request.user}</p>
+          <p className="text-sm text-gray-400">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          {request.processed ? (
+            <span className={request.approved ? 'text-green-400' : 'text-red-400'}>
+              {request.approved ? 'Approved' : 'Rejected'}
+            </span>
+          ) : (
+            <>
+              <span className="text-yellow-400 font-semibold">Pending</span>
+              <button onClick={() => handleProcessPayout(index, true)} className="bg-gray-800 p-2 rounded-lg transition duration-300 hover:bg-gray-700">
+                <Check size={20} className="text-green-500" strokeWidth={3} />
+              </button>
+              <button onClick={() => handleProcessPayout(index, false)} className="bg-gray-800 p-2 rounded-lg transition duration-300 hover:bg-gray-700">
+                <X size={20} className="text-red-500" strokeWidth={3} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="flex items-center space-x-2">
-        <span className="text-yellow-400 font-semibold">Pending</span>
-        <button className="bg-gray-800 p-2 rounded-lg transition duration-300 hover:bg-gray-700">
-          <Check size={20} className="text-green-500" strokeWidth={3} />
-        </button>
-        <button className="bg-gray-800 p-2 rounded-lg transition duration-300 hover:bg-gray-700">
-          <X size={20} className="text-red-500" strokeWidth={3} />
-        </button>
-      </div>
-    </div>
+    ))}
   </div>
 );
 
-const UserTable = () => (
+const UserTable = ({ users }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+
+  const totalPages = Math.ceil(users.length / usersPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return (
     <div className="overflow-x-auto">
-        <table className="w-full text-left">
-            <thead className="bg-gray-700/50">
-                <tr className="border-b border-gray-700">
-                    <th className="p-3">Wallet Address</th>
-                    <th className="p-3">Ticket ID</th>
-                    <th className="p-3">Referrer</th>
-                    <th className="p-3">Pairs Matched</th>
-                    <th className="p-3">Earnings (USDT)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr className="border-b border-gray-700 hover:bg-gray-700/50">
-                    <td className="p-3 font-mono">0x1234...cdef</td>
-                    <td className="p-3">#54321</td>
-                    <td className="p-3 font-mono">0x5678...abcd</td>
-                    <td className="p-3 text-center">3</td>
-                    <td className="p-3">50.00</td>
-                </tr>
-                <tr className="bg-gray-800/50 border-b border-gray-700 hover:bg-gray-700/50">
-                    <td className="p-3 font-mono">0xabcd...1234</td>
-                    <td className="p-3">#98765</td>
-                    <td className="p-3 font-mono">N/A</td>
-                    <td className="p-3 text-center">4</td>
-                    <td className="p-3">250.00</td>
-                </tr>
-            </tbody>
-        </table>
+      <table className="w-full text-left">
+        <thead>
+          <tr className="border-b border-gray-700">
+            <th className="p-3">Wallet Address</th>
+            <th className="p-3">Referrer</th>
+            <th className="p-3">Pairs Matched</th>
+            <th className="p-3">Earnings (USDT)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentUsers.length > 0 ? (
+            currentUsers.map((user, index) => (
+              <tr key={index} className="border-b border-gray-700 hover:bg-gray-700/50">
+                <td className="p-3 font-mono group relative">
+                  <p className="cursor-pointer">{user.address.substring(0, 6)}...{user.address.substring(user.address.length - 4)}</p>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2">
+                    {user.address}
+                  </div>
+                </td>
+                <td className="p-3 font-mono group relative">
+                  {user.referrer !== '0x0000000000000000000000000000000000000000' ? (
+                    <>
+                      <p className="cursor-pointer">{user.referrer.substring(0, 6)}...{user.referrer.substring(user.referrer.length - 4)}</p>
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2">
+                        {user.referrer}
+                      </div>
+                    </>
+                  ) : (
+                    <span>N/A</span>
+                  )}
+                </td>
+                <td className="p-3 text-center">{user.pairsMatched.toString()}</td>
+                <td className="p-3">{user.earnings}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" className="p-3 text-center text-gray-400">No users available.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <div className="flex justify-center mt-4 space-x-2">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(pageNumber => {
+            if (totalPages <= 3) return true;
+            if (currentPage <= 2) return pageNumber <= 3;
+            if (currentPage >= totalPages - 1) return pageNumber >= totalPages - 2;
+            return pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1;
+          })
+          .map(pageNumber => (
+            <button
+              key={pageNumber}
+              onClick={() => paginate(pageNumber)}
+              className={`mx-1 px-3 py-1 rounded-lg ${
+                currentPage === pageNumber ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+              }`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
     </div>
-);
+  );
+};
 
 
 export default Admin;

@@ -34,17 +34,19 @@ contract CryptoLottery {
     }
 
     enum ContestType {
-        Weekly,
-        Monthly,
-        Quarterly,
-        HalfYearly,
-        GrandFirst,
-        GrandSecond,
-        GrandThird,
-        GrandFourth,
-        GrandFifth,
-        GrandSixth
+        Weekly,Monthly,Quarterly,HalfYearly,GrandFirst,GrandSecond,GrandThird,GrandFourth,GrandFifth,GrandSixth
     }
+
+    struct PayoutRequest {
+        address user;
+        uint256 amount;
+        uint256 serviceFee;
+        bool approved;
+        bool processed;
+    }
+
+    PayoutRequest[] public payoutRequests;
+    mapping(address => uint256[]) public userPayoutRequestIndexes;
 
     IERC20 public usdt;
     address public owner;
@@ -61,6 +63,7 @@ contract CryptoLottery {
     mapping(string => Ticket) public tickets;
     mapping(address => string[]) public userTickets;
     mapping(ContestType => string[]) public selectedWinners;
+    mapping(string => bool) public ticketHasWon;
 
     address public prizeWallet;
     address public commissionWallet;
@@ -71,15 +74,25 @@ contract CryptoLottery {
     uint256 public constant TICKET_PRICE = 1e19;
 
     event Registered(address indexed user, address indexed referrer);
-    event TicketPurchased(address indexed user, string ticketId, address referrer, uint256 amount);
+    event TicketPurchased(
+        address indexed user,
+        string ticketId,
+        address referrer,
+        uint256 amount
+    );
     event ReferralCommission(
         address indexed user,
         address indexed fromUser,
         uint256 level,
         uint256 amount
     );
-    event WinnerSelected(ContestType contest, string ticketId, address winner);
-    event PayoutProcessed(address indexed user, uint256 amount, uint256 serviceFee);
+    event WinnerSelected(ContestType contest, string ticketId, address indexed user, uint256 amount);
+    event PayoutProcessed(
+        address indexed user,
+        uint256 amount,
+        uint256 serviceFee,
+        bool approved
+    );
 
     constructor(address _usdt, address _wallet) {
         owner = msg.sender;
@@ -107,7 +120,7 @@ contract CryptoLottery {
     }
 
     function register(address referrerAddr) internal {
-        require(users[msg.sender].referrer == address(0), "Already registered");
+        require(users[msg.sender].referrer == address(0));
 
         address actualReferrer = referrerAddr;
         address level2 = users[actualReferrer].referrer;
@@ -171,15 +184,13 @@ contract CryptoLottery {
     }
 
     function buyTicket(string memory referralTicketId) external {
-        require(msg.sender != owner, "Owner cannot buy ticket");
+        require(msg.sender != owner);
         require(!userHasPurchasedTicket[msg.sender], "Already purchased");
         require(
-            bytes(referralTicketId).length > 0,
-            "Referral ticket ID required"
+            bytes(referralTicketId).length > 0
         );
         require(
-            tickets[referralTicketId].buyer != address(0),
-            "Invalid referral"
+            tickets[referralTicketId].buyer != address(0)
         );
 
         address referrerAddr = tickets[referralTicketId].buyer;
@@ -197,7 +208,12 @@ contract CryptoLottery {
         allTickets.push(newTicketId);
         userHasPurchasedTicket[msg.sender] = true;
 
-        emit TicketPurchased(msg.sender, newTicketId, referrerAddr, TICKET_PRICE);
+        emit TicketPurchased(
+            msg.sender,
+            newTicketId,
+            referrerAddr,
+            TICKET_PRICE
+        );
     }
 
     function generateTicketId() internal returns (string memory) {
@@ -217,22 +233,65 @@ contract CryptoLottery {
         ticketNumber++;
         return fullId;
     }
+
+    function getRewardAmount(
+        ContestType contest
+    ) public pure returns (uint256) {
+        if (contest == ContestType.Weekly) return 50e18;
+        if (contest == ContestType.Monthly) return 100e18;
+        if (contest == ContestType.Quarterly) return 200e18;
+        if (contest == ContestType.HalfYearly) return 400e18;
+        if (contest == ContestType.GrandFirst) return 100000e18;
+        if (contest == ContestType.GrandSecond) return 20000e18;
+        if (contest == ContestType.GrandThird) return 10000e18;
+        if (contest == ContestType.GrandFourth) return 1000e18;
+        if (contest == ContestType.GrandFifth) return 100e18;
+        if (contest == ContestType.GrandSixth) return 50e18;
+        return 0;
+    }
+
+    function distributeRewards(ContestType contest, uint256 rewardAmount) internal {
+        string[] memory winners = selectedWinners[contest];
+        require(winners.length > 0);
+        require(rewardAmount > 0);
+
+        for (uint256 i = 0; i < winners.length; i++) {
+            address winner = tickets[winners[i]].buyer;
+            users[winner].earnings += rewardAmount;
+        }
+    }
+
     function selectWinners(
         ContestType contestType,
         uint256 numberOfWinners
     ) external {
-        uint256 totalTickets = allTickets.length;
-
-        if (numberOfWinners >= totalTickets) {
-            selectedWinners[contestType] = allTickets;
-            for (uint256 i = 0; i < totalTickets; i++) {
-                emit WinnerSelected(contestType, allTickets[i], tickets[allTickets[i]].buyer);
+        // Step 1: Collect eligible tickets (not yet winners)
+        uint256 eligibleCount = 0;
+        for (uint256 i = 0; i < allTickets.length; i++) {
+            if (!ticketHasWon[allTickets[i]]) {
+                eligibleCount++;
             }
-            return;
+        }
+
+        require(eligibleCount > 0);
+
+        // If number of winners exceeds eligible tickets, adjust
+        if (numberOfWinners > eligibleCount) {
+            numberOfWinners = eligibleCount;
+        }
+
+        string[] memory eligibleTickets = new string[](eligibleCount);
+        uint256 index = 0;
+
+        for (uint256 i = 0; i < allTickets.length; i++) {
+            if (!ticketHasWon[allTickets[i]]) {
+                eligibleTickets[index++] = allTickets[i];
+            }
         }
 
         string[] memory winners = new string[](numberOfWinners);
-        bool[] memory selected = new bool[](totalTickets); // local flag array to track used indices
+        bool[] memory selected = new bool[](eligibleCount); // track selected indices
+        uint256 rewardAmount = getRewardAmount(contestType);
 
         for (uint256 i = 0; i < numberOfWinners; i++) {
             uint256 rand;
@@ -249,16 +308,27 @@ contract CryptoLottery {
                             )
                         )
                     ) %
-                    totalTickets;
+                    eligibleCount;
             } while (selected[rand]);
 
             selected[rand] = true;
-            winners[i] = allTickets[rand];
-            emit WinnerSelected(contestType, allTickets[rand], tickets[allTickets[rand]].buyer);
+            string memory winningTicket = eligibleTickets[rand];
+            winners[i] = winningTicket;
+            ticketHasWon[winningTicket] = true;
+
+            emit WinnerSelected(
+                contestType,
+                winningTicket,
+                tickets[winningTicket].buyer,
+                rewardAmount
+            );
         }
 
         selectedWinners[contestType] = winners;
+        distributeRewards(contestType, rewardAmount);
+
     }
+
 
     function getWinnersByContest(
         ContestType contestType
@@ -289,7 +359,7 @@ contract CryptoLottery {
     }
 
     function generateOwnerTicket() external {
-        require(!ownerTicketGenerated, "Owner ticket exists");
+        require(!ownerTicketGenerated, "exists");
         ownerTicketId = generateTicketId();
         tickets[ownerTicketId] = Ticket(ownerTicketId, msg.sender);
         userTickets[msg.sender].push(ownerTicketId);
@@ -299,15 +369,51 @@ contract CryptoLottery {
         emit TicketPurchased(msg.sender, ownerTicketId, address(0), 0);
     }
 
-    function requestPayout() external {
-        uint256 payout = users[msg.sender].earnings;
-        require(payout > 0, "No earnings");
-        uint256 serviceFee = (payout * 5) / 100;
-        uint256 finalAmount = payout - serviceFee;
-        users[msg.sender].earnings = 0;
-        require(usdt.transfer(serviceWallet, serviceFee), "Fee failed");
-        require(usdt.transfer(msg.sender, finalAmount), "Payout failed");
-        emit PayoutProcessed(msg.sender, finalAmount, serviceFee);
+    function requestPayout(uint256 amount) external {
+        require(amount > 0);
+        uint256 userEarnings = users[msg.sender].earnings;
+        require(amount <= userEarnings);
+
+        uint256 serviceFee = (amount * 5) / 100;
+        uint256 finalAmount = amount - serviceFee;
+
+        users[msg.sender].earnings -= amount;
+
+        payoutRequests.push(PayoutRequest({
+            user: msg.sender,
+            amount: finalAmount,
+            serviceFee: serviceFee,
+            approved: false,
+            processed: false
+        }));
+
+        userPayoutRequestIndexes[msg.sender].push(payoutRequests.length - 1);
+    }
+
+    function processPayout(uint256 requestId, bool approve) external {
+        PayoutRequest storage request = payoutRequests[requestId];
+        require(!request.processed);
+
+        request.processed = true;
+        request.approved = approve;
+
+        if (approve) {
+            // require(usdt.transfer(serviceWallet, request.serviceFee), "Fee transfer failed");
+            // require(usdt.transfer(request.user, request.amount), "Payout failed");
+        } else {
+            // Refund user
+            users[request.user].earnings += (request.amount + request.serviceFee);
+        }
+
+        emit PayoutProcessed(request.user, request.amount, request.serviceFee, approve);
+    }
+
+    function getAllPayoutRequests() external view returns (PayoutRequest[] memory) {
+        return payoutRequests;
+    }
+
+    function getUserPayoutRequests(address user) external view returns (uint256[] memory) {
+        return userPayoutRequestIndexes[user];
     }
 
     function getUser(

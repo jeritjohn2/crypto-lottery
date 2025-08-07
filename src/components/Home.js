@@ -63,8 +63,8 @@ const Home = ({
               case 'WinnerSelected':
                 fetchedTransactions.push({
                   type: 'Winner',
-                  user: event.returnValues.winner,
-                  amount: 'N/A',
+                  user: event.returnValues.user,
+                  amount: event.returnValues.amount ? `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT` : 'N/A',
                   time: timestamp,
                   details: {
                     ticketId: event.returnValues.ticketId,
@@ -80,7 +80,7 @@ const Home = ({
                   time: timestamp,
                   details: {
                     serviceFee: `${web3Instance.utils.fromWei(event.returnValues.serviceFee, 'ether')} USDT`,
-                    status: 'Processed',
+                    status: event.returnValues.approved ? 'Approved' : 'Rejected',
                   },
                 });
                 break;

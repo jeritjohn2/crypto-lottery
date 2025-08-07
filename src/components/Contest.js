@@ -1,18 +1,5 @@
 import React from 'react';
-import { Trophy, Calendar } from 'lucide-react';
-
-const contests = [
-  { id: 'weekly', name: 'Weekly Contest', winners: 10, prize: 50, icon: <Calendar /> },
-  { id: 'monthly', name: 'Monthly Contest', winners: 4, prize: 200, icon: <Calendar /> },
-  { id: 'quarterly', name: 'Quarterly Contest', winners: 4, prize: 400, icon: <Calendar /> },
-  { id: 'half-yearly', name: 'Half-Yearly Contest', winners: 4, prize: 800, icon: <Calendar /> },
-  { id: 'grand-1', name: 'Grand Prize 1st', winners: 1, prize: 100000, icon: <Trophy /> },
-  { id: 'grand-2', name: 'Grand Prize 2nd', winners: 2, prize: 50000, icon: <Trophy /> },
-  { id: 'grand-3', name: 'Grand Prize 3rd', winners: 10, prize: 10000, icon: <Trophy /> },
-  { id: 'grand-4', name: 'Grand Prize 4th', winners: 100, prize: 1000, icon: <Trophy /> },
-  { id: 'grand-5', name: 'Grand Prize 5th', winners: 1000, prize: 100, icon: <Trophy /> },
-  { id: 'grand-6', name: 'Grand Prize 6th', winners: 2000, prize: 50, icon: <Trophy /> },
-];
+import { contests } from '../constants';
 
 const ContestCard = ({ contest }) => (
   <div

@@ -7,6 +7,8 @@ import Contest from './components/Contest';
 import Admin from './components/Admin';
 
 import Winners from './components/Winners';
+import Payout from './components/Payout';
+import ReferralTree from './components/ReferralTree';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS } from './constants';
@@ -99,6 +101,8 @@ const App = () => {
             <Route path="/contest" element={<Contest />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/winners" element={<Winners lotteryContract={lotteryContract} />} />
+            <Route path="/payout" element={<Payout />} />
+            <Route path="/referral-tree" element={<ReferralTree />} />
           </Routes>
         </main>
       </div>

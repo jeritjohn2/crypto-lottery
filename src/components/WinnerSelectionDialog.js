@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../contexts/ToastContext';
-
-const contests = [
-  { id: 'weekly', name: 'Weekly Contest', contestType: 0, winners: 10 },
-  { id: 'monthly', name: 'Monthly Contest', contestType: 1, winners: 4 },
-  { id: 'quarterly', name: 'Quarterly Contest', contestType: 2, winners: 4 },
-  { id: 'half-yearly', name: 'Half-Yearly Contest', contestType: 3, winners: 4 },
-  { id: 'grand-1', name: 'Grand Prize 1st', contestType: 4, winners: 1 },
-  { id: 'grand-2', name: 'Grand Prize 2nd', contestType: 5, winners: 2 },
-  { id: 'grand-3', name: 'Grand Prize 3rd', contestType: 6, winners: 10 },
-  { id: 'grand-4', name: 'Grand Prize 4th', contestType: 7, winners: 100 },
-  { id: 'grand-5', name: 'Grand Prize 5th', contestType: 8, winners: 1000 },
-  { id: 'grand-6', name: 'Grand Prize 6th', contestType: 9, winners: 2000 },
-];
+import { contests } from '../constants';
 
 const WinnerSelectionDialog = ({ isOpen, onClose, lotteryContract }) => {
   const [selectedContestType, setSelectedContestType] = useState(null);

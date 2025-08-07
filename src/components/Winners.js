@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../contexts/ToastContext';
-
-const contests = [
-  { id: 'weekly', name: 'Weekly Contest', contestType: 0 },
-  { id: 'monthly', name: 'Monthly Contest', contestType: 1 },
-  { id: 'quarterly', name: 'Quarterly Contest', contestType: 2 },
-  { id: 'half-yearly', name: 'Half-Yearly Contest', contestType: 3 },
-  { id: 'grand-1', name: 'Grand Prize 1st', contestType: 4 },
-  { id: 'grand-2', name: 'Grand Prize 2nd', contestType: 5 },
-  { id: 'grand-3', name: 'Grand Prize 3rd', contestType: 6 },
-  { id: 'grand-4', name: 'Grand Prize 4th', contestType: 7 },
-  { id: 'grand-5', name: 'Grand Prize 5th', contestType: 8 },
-  { id: 'grand-6', name: 'Grand Prize 6th', contestType: 9 },
-];
+import { contests } from '../constants';
 
 const Winners = ({ lotteryContract }) => {
   const [allWinners, setAllWinners] = useState({});
