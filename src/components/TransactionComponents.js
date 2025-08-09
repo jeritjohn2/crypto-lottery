@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Ticket, DollarSign, Award, X, Search, Gift, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Ticket, DollarSign, Award, X, Search, Gift, Share2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import {autoTable} from 'jspdf-autotable';
 
 export const getTransactionIcon = (type, size = 20) => {
   const baseClasses = "p-2 rounded-full";
@@ -17,9 +20,74 @@ export const getTransactionIcon = (type, size = 20) => {
   }
 };
 
-export const TransactionTable = ({ transactions, onSelectTransaction, filterType='All', setFilterType }) => {
+export const TransactionTable = ({ transactions, onSelectTransaction, filterType='All', setFilterType, isAdmin }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const transactionsPerPage = 10;
+  const [showExportOptions, setShowExportOptions] = useState(false);
+
+
+  const exportToExcel = () => {
+    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+    const fileExtension = '.xlsx';
+    const fileName = 'transactions';
+
+    const formattedTransactions = transactions.map(tx => ({
+      ...tx,
+      details: Object.entries(tx.details).map(([key, value]) => `${key}: ${value},`).join('\n')
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formattedTransactions);
+    const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], {type: fileType});
+    const url = URL.createObjectURL(data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName + fileExtension;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+    }, 100);
+  }
+
+  const exportToPdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text('Transaction History', 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+
+    autoTable(doc,{
+      startY: 30,
+      head: [['Type', 'User', 'Amount', 'Time', 'Details']],
+      body: transactions.map(tx => [
+        tx.type,
+        tx.user,
+        tx.amount,
+        tx.time,
+        Object.entries(tx.details).map(([key, value]) => `${key}: ${value}`).join('\n')
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [22, 160, 133] },
+      styles: {
+        cellPadding: 2,
+        fontSize: 8,
+        valign: 'middle',
+        halign: 'left'
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 'auto' },
+      }
+    });
+
+    doc.save('transactions.pdf');
+  }
+
 
   const filteredTransactions = transactions.filter(tx => {
     if (filterType === 'All') return true;
@@ -38,15 +106,50 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Transaction History</h2>
-        {setFilterType && ( // Only show filter if setFilterType is provided (i.e., in Admin page)
-          <select className="bg-gray-700 text-white p-2 rounded-lg" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option>All</option>
-            <option>Ticket Purchase</option>
-            <option>Winner</option>
-            <option>Referral Commission</option>
-            <option>Payout</option>
-          </select>
-        )}
+        <div className="flex items-center space-x-4">
+          {isAdmin && (
+            <div className="relative">
+              <button
+                onClick={() => setShowExportOptions(!showExportOptions)}
+                className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+              >
+                <Download size={20} />
+                <span>Export</span>
+              </button>
+              {showExportOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-lg shadow-lg py-1 z-10">
+                  <button
+                    onClick={() => {
+                      exportToExcel();
+                      setShowExportOptions(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                  >
+                    Export to Excel
+                  </button>
+                  <button
+                    onClick={() => {
+                      exportToPdf();
+                      setShowExportOptions(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                  >
+                    Export to PDF
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {setFilterType && ( // Only show filter if setFilterType is provided (i.e., in Admin page)
+            <select className="bg-gray-700 text-white p-2 rounded-lg" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option>All</option>
+              <option>Ticket Purchase</option>
+              <option>Winner</option>
+              <option>Referral Commission</option>
+              <option>Payout</option>
+            </select>
+          )}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
@@ -86,7 +189,7 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
               <tr>
                 <td colSpan="5" className="p-3 text-center text-gray-400">No transactions available.</td>
               </tr>
-            )}
+            ) }
           </tbody>
         </table>
       </div>
@@ -109,7 +212,7 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
             <button
               key={pageNumber}
               onClick={() => paginate(pageNumber)}
-              className={`mx-1 px-3 py-1 rounded-lg ${
+              className={`mx-1 px-3 py-1 rounded-lg ${ 
                 currentPage === pageNumber ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
               }`}
             >
@@ -127,6 +230,7 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
     </div>
   );
 };
+
 
 export const TransactionModal = ({ transaction, onClose }) => (
   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">

@@ -6,6 +6,7 @@ import WinnerSelectionDialog from './WinnerSelectionDialog';
 import { TransactionTable, TransactionModal } from './TransactionComponents';
 import { Ticket, DollarSign, Users, Award, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+
 const Admin = () => {
   const [password, setPassword] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
@@ -190,6 +191,9 @@ const Admin = () => {
     }
   };
 
+
+ 
+
   if (!loggedIn) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
@@ -254,8 +258,8 @@ const Admin = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
-            <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} filterType={filterType} setFilterType={setFilterType} />
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6"> 
+            <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} filterType={filterType} setFilterType={setFilterType} isAdmin={true} />
           </div>
 
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
@@ -282,6 +286,7 @@ const Admin = () => {
     </div>
   );
 };
+
 
 const StatCard = ({ icon, title, value }) => (
   <div className="bg-gray-800 p-5 rounded-xl shadow-lg flex items-center space-x-4">
