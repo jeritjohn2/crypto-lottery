@@ -8,6 +8,7 @@ import Admin from './components/Admin';
 
 import Winners from './components/Winners';
 import Payout from './components/Payout';
+import Products from './components/Products';
 import ReferralTree from './components/ReferralTree';
 import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
@@ -82,7 +83,7 @@ const App = () => {
   return (
     <Router>
       <div className="flex h-screen bg-background text-text">
-        <Sidebar />
+        <Sidebar walletAddress={walletAddress} connectWallet={connectWallet} />
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
             <Route path="/" element={
@@ -99,10 +100,11 @@ const App = () => {
               />
             } />
             <Route path="/contest" element={<Contest />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/winners" element={<Winners lotteryContract={lotteryContract} />} />
-            <Route path="/payout" element={<Payout />} />
-            <Route path="/referral-tree" element={<ReferralTree />} />
+            <Route path="/admin" element={<Admin walletAddress={walletAddress} />} />
+            <Route path="/winners" element={<Winners lotteryContract={lotteryContract} walletAddress={walletAddress} />} />
+            <Route path="/payout" element={<Payout walletAddress={walletAddress} />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/referral-tree" element={<ReferralTree walletAddress={walletAddress} />} />
           </Routes>
         </main>
       </div>
