@@ -4,7 +4,7 @@ import { getContracts } from '../utils/contract';
 import { useToast } from '../contexts/ToastContext';
 import WinnerSelectionDialog from './WinnerSelectionDialog';
 import { TransactionTable, TransactionModal } from './TransactionComponents';
-import { Ticket, DollarSign, Users, Award, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Ticket, DollarSign, Users, Award, Check, X, ChevronLeft, ChevronRight, Clipboard } from 'lucide-react';
 
 
 const Admin = () => {
@@ -23,7 +23,23 @@ const Admin = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalWinners, setTotalWinners] = useState(0);
   const [payoutRequests, setPayoutRequests] = useState([]);
+  const [copiedOwnerTicketId, setCopiedOwnerTicketId] = useState(false);
+  const handleCopyOwnerTicketId = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedOwnerTicketId(true);
+    setTimeout(() => setCopiedOwnerTicketId(false), 2000); // Reset after 2 seconds
+  };
+
   const { showToast } = useToast();
+
+  const getRewardTypeName = (type) => {
+    switch (parseInt(type)) {
+      case 1: return "Bluetooth Earbuds + Smartwatch";
+      case 2: return "BP Monitoring Machine";
+      case 3: return "Nebulizer";
+      default: return "None";
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -115,6 +131,31 @@ const Admin = () => {
               });
               uniqueUsers.add(event.returnValues.user);
               break;
+            case 'PairMatchingReward':
+              fetchedTransactions.push({
+                type: 'Pair Matching Reward',
+                user: event.returnValues.user,
+                amount: `${web3Instance.utils.fromWei(event.returnValues.amount, 'ether')} USDT`,
+                time: timestamp,
+                details: {
+                  pairs: event.returnValues.pairs,
+                },
+              });
+              uniqueUsers.add(event.returnValues.user);
+              break;
+            case 'RewardClaimed':
+              fetchedTransactions.push({
+                type: 'Reward Claimed',
+                user: event.returnValues.user,
+                amount: 'N/A',
+                time: timestamp,
+                details: {
+                  rewardType: getRewardTypeName(event.returnValues.rewardType),
+                  referrer: event.returnValues.referrer ? event.returnValues.referrer : 'N/A',  
+                },
+              });
+              uniqueUsers.add(event.returnValues.user);
+              break;
             default:
               break;
           }
@@ -133,6 +174,7 @@ const Admin = () => {
               lastActive: new Date(Number(userData[3]) * 1000).toLocaleString(),
               pairsMatched: userData[4],
               earnings: web3Instance.utils.fromWei(userData[5], 'ether'),
+              claimedReward: userData[11] // Assuming claimedReward is at index 11
             });
           } catch (error) {
             console.error(`Error fetching data for user ${userAddress}:`, error);
@@ -196,8 +238,8 @@ const Admin = () => {
 
   if (!loggedIn) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+      <div className="flex items-center justify-center h-screen bg-transparent text-white">
+        <div className="p-8 rounded-lg shadow-lg max-w-md w-full backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
           <div className="space-y-6">
             <input
@@ -220,7 +262,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="flex bg-gray-900 text-white">
+    <div className="flex bg-transparent text-white">
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -232,13 +274,25 @@ const Admin = () => {
                 <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value={totalWinners} />
               </div>
             </div>
-            <div className="lg:col-span-1 bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col">
+            <div className="lg:col-span-1 p-6 rounded-lg shadow-lg flex flex-col backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
               <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
               <div className="space-y-4 flex-grow">
                 {ownerTicketGenerated ? (
                   <div>
                     <p className="text-lg">Owner Ticket ID:</p>
-                    <p className="p-3 bg-gray-700 rounded-lg font-mono">{ownerTicketId.toString()}</p>
+                    <div className="flex items-center">
+                      <p className="p-3 bg-gray-700 rounded-lg font-mono mr-2">{ownerTicketId.toString()}</p>
+                      <button
+                        onClick={() => handleCopyOwnerTicketId(ownerTicketId.toString())}
+                        className="p-2 rounded-full hover:bg-white/20 transition-colors duration-200"
+                      >
+                        {copiedOwnerTicketId ? (
+                          <Check size={20} className="text-green-400" />
+                        ) : ( 
+                          <Clipboard size={20} className="text-gray-400" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -258,16 +312,16 @@ const Admin = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6"> 
+          <div className="p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"> 
             <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} filterType={filterType} setFilterType={setFilterType} isAdmin={true} />
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+          <div className="p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
             <h2 className="text-xl font-semibold mb-4">Payout Requests</h2>
             <PayoutRequests payoutRequests={payoutRequests} handleProcessPayout={handleProcessPayout} />
           </div>
 
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+          <div className="p-6 rounded-lg shadow-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
             <h2 className="text-xl font-semibold mb-4">User Stats</h2>
             <UserTable users={users} />
           </div>
@@ -289,7 +343,7 @@ const Admin = () => {
 
 
 const StatCard = ({ icon, title, value }) => (
-  <div className="bg-gray-800 p-5 rounded-xl shadow-lg flex items-center space-x-4">
+  <div className="p-5 rounded-xl shadow-lg flex items-center space-x-4 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
     <div className="flex-shrink-0">
       {icon}
     </div>
@@ -303,7 +357,7 @@ const StatCard = ({ icon, title, value }) => (
 const PayoutRequests = ({ payoutRequests, handleProcessPayout }) => (
   <div className="space-y-4">
     {payoutRequests.map((request, index) => (
-      <div key={index} className="flex flex-wrap items-center justify-between bg-gray-700/50 p-4 rounded-lg">
+      <div key={index} className="flex flex-wrap items-center justify-between p-4 rounded-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
         <div className="mb-2 sm:mb-0">
           <p className="font-mono">{request.user}</p>
           <p className="text-sm text-gray-400">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>
@@ -351,6 +405,7 @@ const UserTable = ({ users }) => {
             <th className="p-3">Referrer</th>
             <th className="p-3">Pairs Matched</th>
             <th className="p-3">Earnings (USDT)</th>
+            <th className="p-3">Claimed Reward</th>
           </tr>
         </thead>
         <tbody>
@@ -377,6 +432,7 @@ const UserTable = ({ users }) => {
                 </td>
                 <td className="p-3 text-center">{user.pairsMatched.toString()}</td>
                 <td className="p-3">{user.earnings}</td>
+                <td className="p-3">{user.claimedReward}</td>
               </tr>
             ))
           ) : (

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { Shield, Home, UserCog, Ticket, Award, DollarSign, GitMerge, Gift, Wallet } from 'lucide-react';
 
 const Sidebar = ({ walletAddress, connectWallet }) => (
-  <div className="w-64 bg-gray-800 p-6 flex flex-col shadow-lg">
+  <div className="w-64 bg-transparent p-6 flex flex-col shadow-lg border-r border-gray-900">
     <div className="flex items-center mb-8">
       <Shield size={32} className="text-blue-500 mr-3" />
       <h1 className="text-2xl font-bold">Crypto Lottery</h1>

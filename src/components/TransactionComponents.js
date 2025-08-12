@@ -15,6 +15,10 @@ export const getTransactionIcon = (type, size = 20) => {
       return <div className={`bg-purple-500/20 text-purple-500 ${baseClasses}`}><Share2 size={size} /></div>;
     case 'Payout':
       return <div className={`bg-yellow-500/20 text-yellow-500 ${baseClasses}`}><DollarSign size={size} /></div>;
+    case 'Pair Matching Reward':
+      return <div className={`bg-green-500/20 text-green-500 ${baseClasses}`}><Gift size={size} /></div>;
+    case 'Reward Claimed':
+      return <div className={`bg-yellow-500/20 text-yellow-500 ${baseClasses}`}><Award size={size} /></div>;
     default:
       return <div className={`bg-gray-500/20 text-gray-500 ${baseClasses}`}><Gift size={size} /></div>;
   }

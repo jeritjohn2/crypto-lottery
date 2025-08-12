@@ -27,6 +27,31 @@
         {
           "indexed": false,
           "internalType": "uint256",
+          "name": "pairs",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "PairMatchingReward",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
         },
@@ -94,6 +119,31 @@
         }
       ],
       "name": "Registered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "referrer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum CryptoLottery.RewardType",
+          "name": "rewardType",
+          "type": "uint8"
+        }
+      ],
+      "name": "RewardClaimed",
       "type": "event"
     },
     {
@@ -199,6 +249,19 @@
         }
       ],
       "name": "buyTicket",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "enum CryptoLottery.RewardType",
+          "name": "rewardType",
+          "type": "uint8"
+        }
+      ],
+      "name": "claimReward",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -365,6 +428,16 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum CryptoLottery.RewardType",
+          "name": "",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -857,6 +930,16 @@
           "internalType": "uint256",
           "name": "rightCount",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "rewardedMilestone",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum CryptoLottery.RewardType",
+          "name": "claimedReward",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",

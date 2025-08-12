@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "hardhat/console.sol";
+
 
 interface IERC20 {
     function transferFrom(
@@ -15,6 +17,13 @@ interface IERC20 {
 contract CryptoLottery {
     using Strings for uint256;
 
+    enum RewardType {
+        None,
+        BluetoothEarbudsSmartwatch,
+        BPMonitoringMachine,
+        Nebulizer
+    }
+
     struct User {
         address referrer;
         address level1;
@@ -26,6 +35,8 @@ contract CryptoLottery {
         address rightChild;
         uint256 leftCount;
         uint256 rightCount;
+        uint256 rewardedMilestone;
+        RewardType claimedReward;
     }
 
     struct Ticket {
@@ -34,7 +45,16 @@ contract CryptoLottery {
     }
 
     enum ContestType {
-        Weekly,Monthly,Quarterly,HalfYearly,GrandFirst,GrandSecond,GrandThird,GrandFourth,GrandFifth,GrandSixth
+        Weekly,
+        Monthly,
+        Quarterly,
+        HalfYearly,
+        GrandFirst,
+        GrandSecond,
+        GrandThird,
+        GrandFourth,
+        GrandFifth,
+        GrandSixth
     }
 
     struct PayoutRequest {
@@ -86,12 +106,27 @@ contract CryptoLottery {
         uint256 level,
         uint256 amount
     );
-    event WinnerSelected(ContestType contest, string ticketId, address indexed user, uint256 amount);
+    event WinnerSelected(
+        ContestType contest,
+        string ticketId,
+        address indexed user,
+        uint256 amount
+    );
     event PayoutProcessed(
         address indexed user,
         uint256 amount,
         uint256 serviceFee,
         bool approved
+    );
+    event PairMatchingReward(
+        address indexed user,
+        uint256 pairs,
+        uint256 amount
+    );
+    event RewardClaimed(
+        address indexed user,
+        address indexed referrer,
+        RewardType rewardType
     );
 
     constructor(address _usdt, address _wallet) {
@@ -114,7 +149,9 @@ contract CryptoLottery {
             leftChild: address(0),
             rightChild: address(0),
             leftCount: 0,
-            rightCount: 0
+            rightCount: 0,
+            rewardedMilestone: 0,
+            claimedReward: RewardType.None
         });
         userList.push(msg.sender);
     }
@@ -136,7 +173,9 @@ contract CryptoLottery {
             leftChild: address(0),
             rightChild: address(0),
             leftCount: 0,
-            rightCount: 0
+            rightCount: 0,
+            rewardedMilestone: 0,
+            claimedReward: RewardType.None
         });
 
         if (users[actualReferrer].leftChild == address(0)) {
@@ -148,6 +187,75 @@ contract CryptoLottery {
         updatePairCounts(actualReferrer);
         userList.push(msg.sender);
         emit Registered(msg.sender, actualReferrer);
+    }
+
+    function getMilestoneBonus(
+        uint256 milestone
+    ) internal pure returns (uint256) {
+        if (milestone == 3) return (100 * TICKET_PRICE * 200) / 10000;
+        if (milestone == 6) return (500 * TICKET_PRICE * 175) / 10000;
+        if (milestone == 2500) return (2500 * TICKET_PRICE * 150) / 10000;
+        if (milestone == 5000) return (5000 * TICKET_PRICE * 125) / 10000;
+        if (milestone == 10000) return (10000 * TICKET_PRICE * 100) / 10000;
+        if (milestone == 25000) return (25000 * TICKET_PRICE * 75) / 10000;
+        if (milestone == 50000) return (50000 * TICKET_PRICE * 50) / 10000;
+        if (milestone == 100000) return (100000 * TICKET_PRICE * 25) / 10000;
+        return 0;
+    }
+
+    function checkAndRewardMilestones(address userAddr) internal {
+        User storage user = users[userAddr];
+        uint256 pairs = user.pairs;
+        uint256 reward;
+
+        if (pairs >= 3 && user.rewardedMilestone < 3) {
+            reward = getMilestoneBonus(3) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 3;
+            emit PairMatchingReward(userAddr, 100, reward);
+        }
+        if (pairs >= 6 && user.rewardedMilestone < 6) {
+            reward = getMilestoneBonus(6) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 500;
+            emit PairMatchingReward(userAddr, 500, reward);
+        }
+        if (pairs >= 2500 && user.rewardedMilestone < 2500) {
+            reward = getMilestoneBonus(2500) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 2500;
+            emit PairMatchingReward(userAddr, 2500, reward);
+        }
+        if (pairs >= 5000 && user.rewardedMilestone < 5000) {
+            reward = getMilestoneBonus(5000) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 5000;
+            emit PairMatchingReward(userAddr, 5000, reward);
+        }
+        if (pairs >= 10000 && user.rewardedMilestone < 10000) {
+            reward = getMilestoneBonus(10000) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 10000;
+            emit PairMatchingReward(userAddr, 10000, reward);
+        }
+        if (pairs >= 25000 && user.rewardedMilestone < 25000) {
+            reward = getMilestoneBonus(25000) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 25000;
+            emit PairMatchingReward(userAddr, 25000, reward);
+        }
+        if (pairs >= 50000 && user.rewardedMilestone < 50000) {
+            reward = getMilestoneBonus(50000) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 50000;
+            emit PairMatchingReward(userAddr, 50000, reward);
+        }
+        if (pairs >= 100000 && user.rewardedMilestone < 100000) {
+            reward = getMilestoneBonus(100000) - getMilestoneBonus(user.rewardedMilestone);
+            user.earnings += reward;
+            user.rewardedMilestone = 100000;
+            emit PairMatchingReward(userAddr, 100000, reward);
+        }
     }
 
     function updatePairCounts(address referrer) internal {
@@ -166,9 +274,7 @@ contract CryptoLottery {
             uint256 newPairs = minPairs - users[referrer].pairs;
             if (newPairs > 0) {
                 users[referrer].pairs += newPairs;
-                uint256 commission = (TICKET_PRICE * 2 * newPairs) / 100;
-                users[referrer].earnings += commission;
-                emit ReferralCommission(referrer, msg.sender, 0, commission);
+                checkAndRewardMilestones(referrer);
             }
 
             referrer = users[referrer].referrer;
@@ -185,21 +291,21 @@ contract CryptoLottery {
 
     function buyTicket(string memory referralTicketId) external {
         require(msg.sender != owner);
-        require(!userHasPurchasedTicket[msg.sender], "Already purchased");
-        require(
-            bytes(referralTicketId).length > 0
-        );
-        require(
-            tickets[referralTicketId].buyer != address(0)
-        );
+        require(!userHasPurchasedTicket[msg.sender]);
+        require(bytes(referralTicketId).length > 0);
+        require(tickets[referralTicketId].buyer != address(0));
 
         address referrerAddr = tickets[referralTicketId].buyer;
-        require(referrerAddr != msg.sender, "Cannot refer yourself");
+        require(referrerAddr != msg.sender);
 
         if (users[msg.sender].referrer == address(0)) {
             register(referrerAddr);
         }
-
+        require(usdt.transferFrom(msg.sender, address(this), TICKET_PRICE), "Transfer failed");
+        usdt.transfer(prizeWallet, (TICKET_PRICE * 2329) / 10000);
+        usdt.transfer(commissionWallet, (TICKET_PRICE * 2300) / 10000);
+        usdt.transfer(productWallet, (TICKET_PRICE * 2971) / 10000);
+        usdt.transfer(profitWallet, (TICKET_PRICE * 2400) / 10000);
         distributeCommission(msg.sender);
 
         string memory newTicketId = generateTicketId();
@@ -250,7 +356,10 @@ contract CryptoLottery {
         return 0;
     }
 
-    function distributeRewards(ContestType contest, uint256 rewardAmount) internal {
+    function distributeRewards(
+        ContestType contest,
+        uint256 rewardAmount
+    ) internal {
         string[] memory winners = selectedWinners[contest];
         require(winners.length > 0);
         require(rewardAmount > 0);
@@ -326,9 +435,7 @@ contract CryptoLottery {
 
         selectedWinners[contestType] = winners;
         distributeRewards(contestType, rewardAmount);
-
     }
-
 
     function getWinnersByContest(
         ContestType contestType
@@ -359,7 +466,7 @@ contract CryptoLottery {
     }
 
     function generateOwnerTicket() external {
-        require(!ownerTicketGenerated, "exists");
+        require(!ownerTicketGenerated);
         ownerTicketId = generateTicketId();
         tickets[ownerTicketId] = Ticket(ownerTicketId, msg.sender);
         userTickets[msg.sender].push(ownerTicketId);
@@ -379,13 +486,15 @@ contract CryptoLottery {
 
         users[msg.sender].earnings -= amount;
 
-        payoutRequests.push(PayoutRequest({
-            user: msg.sender,
-            amount: finalAmount,
-            serviceFee: serviceFee,
-            approved: false,
-            processed: false
-        }));
+        payoutRequests.push(
+            PayoutRequest({
+                user: msg.sender,
+                amount: finalAmount,
+                serviceFee: serviceFee,
+                approved: false,
+                processed: false
+            })
+        );
 
         userPayoutRequestIndexes[msg.sender].push(payoutRequests.length - 1);
     }
@@ -398,21 +507,40 @@ contract CryptoLottery {
         request.approved = approve;
 
         if (approve) {
-            // require(usdt.transfer(serviceWallet, request.serviceFee), "Fee transfer failed");
-            // require(usdt.transfer(request.user, request.amount), "Payout failed");
+            usdt.transfer(serviceWallet, request.serviceFee);
+            usdt.transfer(request.user, request.amount);
         } else {
             // Refund user
-            users[request.user].earnings += (request.amount + request.serviceFee);
+            users[request.user].earnings += (request.amount +
+                request.serviceFee);
         }
 
-        emit PayoutProcessed(request.user, request.amount, request.serviceFee, approve);
+        emit PayoutProcessed(
+            request.user,
+            request.amount,
+            request.serviceFee,
+            approve
+        );
+    }
+    function claimReward(RewardType rewardType) external {
+        User storage user = users[msg.sender];
+        require(user.claimedReward == RewardType.None, "Reward already claimed");
+        require(rewardType != RewardType.None, "Invalid reward type");
+        user.claimedReward = rewardType;
+        emit RewardClaimed(msg.sender,user.referrer, rewardType);
     }
 
-    function getAllPayoutRequests() external view returns (PayoutRequest[] memory) {
+    function getAllPayoutRequests()
+        external
+        view
+        returns (PayoutRequest[] memory)
+    {
         return payoutRequests;
     }
 
-    function getUserPayoutRequests(address user) external view returns (uint256[] memory) {
+    function getUserPayoutRequests(
+        address user
+    ) external view returns (uint256[] memory) {
         return userPayoutRequestIndexes[user];
     }
 
@@ -431,7 +559,9 @@ contract CryptoLottery {
             address,
             address,
             uint256,
-            uint256
+            uint256,
+            uint256,
+            RewardType // Added RewardType
         )
     {
         User memory u = users[user];
@@ -445,7 +575,9 @@ contract CryptoLottery {
             u.leftChild,
             u.rightChild,
             u.leftCount,
-            u.rightCount
+            u.rightCount,
+            u.rewardedMilestone,
+            u.claimedReward // Added claimedReward
         );
     }
     function getUserTickets(

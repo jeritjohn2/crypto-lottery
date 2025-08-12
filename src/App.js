@@ -14,6 +14,7 @@ import './styles.css';
 import lotteryAbi from './abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS } from './constants';
 import { useToast } from './contexts/ToastContext';
+import { getContracts } from './utils/contract';
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -66,6 +67,16 @@ const App = () => {
       }
       console.log(`Buying ticket with referral ID: ${referralTicketId}`);
       showToast('Please approve the transaction in your wallet.', 'info');
+      const {contract, usdt} = getContracts(web3);
+      //give some usdt to user for testing
+      await usdt.methods.mint(walletAddress, web3.utils.toWei('10', 'ether')).send({ from: walletAddress });
+      await usdt.methods.approve(LOTTERY_ADDRESS, web3.utils.toWei('10', 'ether')).send({ from: walletAddress })
+      const balance = await usdt.methods.balanceOf(walletAddress).call();
+      console.log("USDT balance of user:", balance); 
+      const sBalance = await usdt.methods.balanceOf("0x79f47536919166CAF62dC932165976539fC05465").call();
+      console.log("Product Wallet:", web3.utils.fromWei(sBalance, "ether"), "ETH");
+
+
       await lotteryContract.methods.buyTicket(referralTicketId).send({ from: walletAddress });
       showToast('🎉 Ticket purchased successfully!', 'success');
       const user = await lotteryContract.methods.getUser(walletAddress).call();
@@ -82,7 +93,7 @@ const App = () => {
 
   return (
     <Router>
-      <div className="flex h-screen bg-background text-text">
+      <div className="flex h-screen bg-background text-text [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]">
         <Sidebar walletAddress={walletAddress} connectWallet={connectWallet} />
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
@@ -103,7 +114,7 @@ const App = () => {
             <Route path="/admin" element={<Admin walletAddress={walletAddress} />} />
             <Route path="/winners" element={<Winners lotteryContract={lotteryContract} walletAddress={walletAddress} />} />
             <Route path="/payout" element={<Payout walletAddress={walletAddress} />} />
-            <Route path="/products" element={<Products />} />
+            <Route path="/products" element={<Products walletAddress={walletAddress} userData={userData}/>} />
             <Route path="/referral-tree" element={<ReferralTree walletAddress={walletAddress} />} />
           </Routes>
         </main>

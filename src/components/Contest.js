@@ -3,7 +3,7 @@ import { contests } from '../constants';
 
 const ContestCard = ({ contest }) => (
   <div
-    className="bg-primary p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col justify-between cursor-pointer"
+    className="p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col justify-between cursor-pointer backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"
   >
     <div>
       <div className="flex items-center text-accent mb-4">
