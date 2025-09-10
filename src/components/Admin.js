@@ -11,6 +11,7 @@ const Admin = () => {
   const [password, setPassword] = useState('');
   const [loggedIn, setLoggedIn] = useState(false);
   const [lotteryContract, setLotteryContract] = useState(null);
+  const [usdtContract, setUsdtContract] = useState(null);
   const [ownerTicketGenerated, setOwnerTicketGenerated] = useState(false);
   const [ownerTicketId, setOwnerTicketId] = useState("");
   const [isWinnerSelectionOpen, setIsWinnerSelectionOpen] = useState(false);
@@ -45,8 +46,10 @@ const Admin = () => {
     const init = async () => {
       if (window.ethereum) {
         const web3Instance = new Web3(window.ethereum);
-        const { lottery } = getContracts(web3Instance);
+        const { lottery, usdt } = getContracts(web3Instance);
         setLotteryContract(lottery);
+        setUsdtContract(usdt);
+
         const ownerTicketGenerated = await lottery.methods.ownerTicketGenerated().call();
         setOwnerTicketGenerated(ownerTicketGenerated);
         if (ownerTicketGenerated) {
@@ -165,16 +168,14 @@ const Admin = () => {
         const fetchedUsers = [];
         for (const userAddress of Array.from(uniqueUsers)) {
           try {
-            const userData = await lottery.methods.users(userAddress).call();
+            const userData = await lottery.methods.getUser(userAddress).call();
             fetchedUsers.push({
               address: userAddress,
-              ticketId: userData[0],
-              referrer: userData[1],
-              registrationTime: new Date(Number(userData[2]) * 1000).toLocaleString(),
-              lastActive: new Date(Number(userData[3]) * 1000).toLocaleString(),
+              referrer: userData[0],
               pairsMatched: userData[4],
-              earnings: web3Instance.utils.fromWei(userData[5], 'ether'),
-              claimedReward: userData[11] // Assuming claimedReward is at index 11
+              prizeEarnings: web3Instance.utils.fromWei(userData[5], 'ether'),
+              referralEarnings: web3Instance.utils.fromWei(userData[6], 'ether'),
+              claimedReward: getRewardTypeName(userData[12])
             });
           } catch (error) {
             console.error(`Error fetching data for user ${userAddress}:`, error);
@@ -206,7 +207,10 @@ const Admin = () => {
     if (lotteryContract) {
       try {
         showToast('Please approve the transaction in your wallet.', 'info');
-        await lotteryContract.methods.processPayout(requestId, approve).send({ from: window.ethereum.selectedAddress });
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        const amountToApprove = parseInt(payoutRequests[requestId].amount) + parseInt(payoutRequests[requestId].serviceFee);
+        await usdtContract.methods.approve(lotteryContract._address, amountToApprove).send({ from: accounts[0] });
+        await lotteryContract.methods.processPayout(requestId, approve).send({ from: accounts[0] });
         showToast('Payout processed successfully!', 'success');
         const requests = await lotteryContract.methods.getAllPayoutRequests().call();
         setPayoutRequests(requests);
@@ -221,7 +225,11 @@ const Admin = () => {
     if (lotteryContract) {
       try {
         showToast('Please approve the transaction in your wallet.', 'info');
-        await lotteryContract.methods.generateOwnerTicket().send({ from: window.ethereum.selectedAddress });
+        const estimatedGas = await lotteryContract.methods.generateOwnerTicket().estimateGas({ from: window.ethereum.selectedAddress });
+        console.log('Estimated gas:', estimatedGas);
+
+        await lotteryContract.methods.generateOwnerTicket().send({ from: window.ethereum.selectedAddress,gas: parseInt(estimatedGas)+5000
+         });
         showToast('Owner ticket generated successfully!', 'success');
         const ownerTicketId = await lotteryContract.methods.ownerTicketId().call();
         setOwnerTicketId(ownerTicketId);
@@ -363,6 +371,7 @@ const PayoutRequests = ({ payoutRequests, handleProcessPayout }) => (
           <p className="text-sm text-gray-400">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>
         </div>
         <div className="flex items-center space-x-2">
+          <span className='text-sm text-gray-400 mr-2'>({Number(request.earningType) === 0 ? 'Prize' : 'Referral'})</span>
           {request.processed ? (
             <span className={request.approved ? 'text-green-400' : 'text-red-400'}>
               {request.approved ? 'Approved' : 'Rejected'}
@@ -404,7 +413,8 @@ const UserTable = ({ users }) => {
             <th className="p-3">Wallet Address</th>
             <th className="p-3">Referrer</th>
             <th className="p-3">Pairs Matched</th>
-            <th className="p-3">Earnings (USDT)</th>
+            <th className="p-3">Prize Earnings (USDT)</th>
+            <th className="p-3">Referral Earnings (USDT)</th>
             <th className="p-3">Claimed Reward</th>
           </tr>
         </thead>
@@ -431,13 +441,14 @@ const UserTable = ({ users }) => {
                   )}
                 </td>
                 <td className="p-3 text-center">{user.pairsMatched.toString()}</td>
-                <td className="p-3">{user.earnings}</td>
+                <td className="p-3">{user.prizeEarnings}</td>
+                <td className="p-3">{user.referralEarnings}</td>
                 <td className="p-3">{user.claimedReward}</td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5" className="p-3 text-center text-gray-400">No users available.</td>
+              <td colSpan="6" className="p-3 text-center text-gray-400">No users available.</td>
             </tr>
           )}
         </tbody>

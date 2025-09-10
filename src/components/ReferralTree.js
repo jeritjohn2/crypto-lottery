@@ -83,22 +83,6 @@ const ReferralTree = () => {
           rootNodeClassName="node__root"
           branchNodeClassName="node__branch"
           leafNodeClassName="node__leaf"
-          renderCustomNodeElement={({ nodeDatum }) => (
-            <g>
-              <circle r="15" fill="#61dafb" />
-              <text fill="black" strokeWidth="0.5" x="-30" y="-20" textAnchor="middle" className="text-xs">
-                {nodeDatum.name}
-              </text>
-              <text fill="black" strokeWidth="0.5" x="-30" y="0" textAnchor="middle" className="text-xs">
-                {nodeDatum.attributes.address}
-              </text>
-              {nodeDatum.attributes.claimedReward !== "None" && (
-                <text fill="black" strokeWidth="0.5" x="-30" y="20" textAnchor="middle" className="text-xs">
-                  Reward: {nodeDatum.attributes.claimedReward}
-                </text>
-              )}
-            </g>
-          )}
         />
       ) : (
         <div className="flex items-center justify-center h-full p-6 rounded-lg shadow-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">

@@ -39,6 +39,7 @@ const App = () => {
       setWalletAddress(address);
       const contract = new web3Instance.eth.Contract(lotteryAbi, LOTTERY_ADDRESS);
       setLotteryContract(contract);
+
       const user = await contract.methods.getUser(address).call();
       console.log('User data:', user);
       if (user.referrer !== '0x0000000000000000000000000000000000000000') {

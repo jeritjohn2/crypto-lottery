@@ -103,7 +103,15 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
   const currentTransactions = filteredTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
 
   const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
-
+  const filters= [
+    'All',
+    'Ticket Purchase',
+    'Winner',
+    'Referral Commission',
+    'Payout',
+    'Pair Matching Reward',
+    'Reward Claimed'
+  ];
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
@@ -146,11 +154,9 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
           )}
           {setFilterType && ( // Only show filter if setFilterType is provided (i.e., in Admin page)
             <select className="bg-gray-700 text-white p-2 rounded-lg" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-              <option>All</option>
-              <option>Ticket Purchase</option>
-              <option>Winner</option>
-              <option>Referral Commission</option>
-              <option>Payout</option>
+              {filters.map((filter) => (
+                <option key={filter} value={filter}>{filter} </option>
+              ))}
             </select>
           )}
         </div>

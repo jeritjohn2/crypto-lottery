@@ -316,6 +316,11 @@
               "internalType": "bool",
               "name": "processed",
               "type": "bool"
+            },
+            {
+              "internalType": "enum CryptoLottery.EarningType",
+              "name": "earningType",
+              "type": "uint8"
             }
           ],
           "internalType": "struct CryptoLottery.PayoutRequest[]",
@@ -398,6 +403,11 @@
           "internalType": "address",
           "name": "",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         },
         {
           "internalType": "uint256",
@@ -573,6 +583,11 @@
           "internalType": "bool",
           "name": "processed",
           "type": "bool"
+        },
+        {
+          "internalType": "enum CryptoLottery.EarningType",
+          "name": "earningType",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -641,6 +656,11 @@
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
+        },
+        {
+          "internalType": "enum CryptoLottery.EarningType",
+          "name": "earningType",
+          "type": "uint8"
         }
       ],
       "name": "requestPayout",
@@ -908,7 +928,12 @@
         },
         {
           "internalType": "uint256",
-          "name": "earnings",
+          "name": "prizeEarnings",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "referralEarnings",
           "type": "uint256"
         },
         {

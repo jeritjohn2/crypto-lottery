@@ -46,3 +46,5 @@ FRONTEND_PID=$!
 
 # Keep both running
 wait $NODE_PID $FRONTEND_PID
+
+# netstat -ano | grep 8545

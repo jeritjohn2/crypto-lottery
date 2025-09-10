@@ -6,8 +6,10 @@ import { DollarSign, Send } from 'lucide-react';
 
 const Payout = () => {
   const [lotteryContract, setLotteryContract] = useState(null);
-  const [earnings, setEarnings] = useState('0');
+  const [prizeEarnings, setPrizeEarnings] = useState('0');
+  const [referralEarnings, setReferralEarnings] = useState('0');
   const [amount, setAmount] = useState('');
+  const [earningType, setEarningType] = useState('Prize');
   const [userRequests, setUserRequests] = useState([]);
   const { showToast } = useToast();
 
@@ -20,8 +22,9 @@ const Payout = () => {
 
         const accounts = await web3Instance.eth.getAccounts();
         if (accounts.length > 0) {
-          const user = await lottery.methods.users(accounts[0]).call();
-          setEarnings(web3Instance.utils.fromWei(user.earnings, 'ether'));
+          const user = await lottery.methods.getUser(accounts[0]).call();
+          setPrizeEarnings(web3Instance.utils.fromWei(user[5], 'ether'));
+          setReferralEarnings(web3Instance.utils.fromWei(user[6], 'ether'));
 
           const requestIndexes = await lottery.methods.getUserPayoutRequests(accounts[0]).call();
           const allRequests = await lottery.methods.getAllPayoutRequests().call();
@@ -35,16 +38,22 @@ const Payout = () => {
 
   const handleRequestPayout = async () => {
     if (lotteryContract && amount) {
+      if (parseFloat(amount) < 1) {
+        showToast('Minimum payout amount is 10 USDT.', 'error');
+        return;
+      }
       try {
         const web3Instance = new Web3(window.ethereum);
         const accounts = await web3Instance.eth.getAccounts();
         if (accounts.length > 0) {
           showToast('Please approve the transaction in your wallet.', 'info');
           const amountInWei = web3Instance.utils.toWei(amount, 'ether');
-          await lotteryContract.methods.requestPayout(amountInWei).send({ from: accounts[0] });
+          const earningTypeValue = earningType === 'Prize' ? 0 : 1;
+          await lotteryContract.methods.requestPayout(amountInWei, earningTypeValue).send({ from: accounts[0] });
           showToast('Payout request sent successfully!', 'success');
-          const user = await lotteryContract.methods.users(accounts[0]).call();
-          setEarnings(web3Instance.utils.fromWei(user.earnings, 'ether'));
+          const user = await lotteryContract.methods.getUser(accounts[0]).call();
+          setPrizeEarnings(web3Instance.utils.fromWei(user[5], 'ether'));
+          setReferralEarnings(web3Instance.utils.fromWei(user[6], 'ether'));
           setAmount('');
 
           const requestIndexes = await lotteryContract.methods.getUserPayoutRequests(accounts[0]).call();
@@ -65,12 +74,27 @@ const Payout = () => {
         <div className="p-6 rounded-lg shadow-lg max-w-md mx-auto backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <h2 className="text-2xl font-bold mb-2 text-center text-white">Request Payout</h2>
           <p className="text-center text-gray-400 mb-6 text-sm">A 5% service charge will be applied to all payouts.</p>
+          <p className="text-center text-gray-400 mb-6 text-sm">Minimum payout amount is 10 USDT.</p>
           <div className="space-y-6">
-            <div className="p-4 rounded-lg text-center backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
-              <p className="text-sm text-gray-400">Your Current Earnings</p>
-              <p className="text-3xl font-bold text-white">{parseFloat(earnings).toFixed(2)} USDT</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg text-center backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+                <p className="text-sm text-gray-400">Prize Earnings</p>
+                <p className="text-3xl font-bold text-white">{parseFloat(prizeEarnings).toFixed(2)} USDT</p>
+              </div>
+              <div className="p-4 rounded-lg text-center backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+                <p className="text-sm text-gray-400">Referral Earnings</p>
+                <p className="text-3xl font-bold text-white">{parseFloat(referralEarnings).toFixed(2)} USDT</p>
+              </div>
             </div>
             <div className="relative">
+              <select
+                value={earningType}
+                onChange={(e) => setEarningType(e.target.value)}
+                className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              >
+                <option value="Prize">Prize Earnings</option>
+                <option value="Referral">Referral Earnings</option>
+              </select>
               <input
                 type="number"
                 value={amount}
@@ -100,6 +124,7 @@ const Payout = () => {
                   <p className="font-mono">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>
                 </div>
                 <div className="flex items-center space-x-2">
+                  <span className='text-sm text-gray-400 mr-2'>({Number(request.earningType) === 0 ? 'Prize' : 'Referral'})</span>
                   {request.processed ? (
                     <span className={request.approved ? 'text-green-400' : 'text-red-400'}>
                       {request.approved ? 'Approved' : 'Rejected'}

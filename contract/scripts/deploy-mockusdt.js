@@ -1,7 +1,6 @@
 const hre = require("hardhat");
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
 
   const MockUSDT = await hre.ethers.getContractFactory("MockUSDT");
   const mockUsdt = await MockUSDT.deploy();
