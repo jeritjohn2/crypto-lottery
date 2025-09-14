@@ -27,8 +27,8 @@ const Home = ({
   const getRewardTypeName = (type) => {
     switch (parseInt(type)) {
       case 1: return "Bluetooth Earbuds + Smartwatch";
-      case 2: return "BP Monitoring Machine";
-      case 3: return "Nebulizer";
+      case 2: return "Bluetooth Earbuds + BP Monitoring Machine";
+      case 3: return "Bluetooth Earbuds + Nebulizer";
       default: return "None";
     }
   };
@@ -167,15 +167,15 @@ const Home = ({
       )}
 
       {isRegistered && userData && (
-        <div className="p-8 rounded-2xl shadow-2xl text-white font-mono max-w-2xl mx-auto transform hover:scale-105 transition-transform duration-300 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+        <div className="p-4 sm:p-8 rounded-2xl shadow-2xl text-white font-mono max-w-2xl mx-auto transform hover:scale-105 transition-transform duration-300 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <div className="flex justify-between items-start mb-6">
-            <h3 className="text-2xl font-bold tracking-wider">Crypto Lottery</h3>
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300 opacity-80"><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M15 2v2" /><path d="M15 20v2" /><path d="M2 15h2" /><path d="M2 9h2" /><path d="M20 15h2" /><path d="M20 9h2" /><path d="M9 2v2" /><path d="M9 20v2" /></svg>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-wider">Crypto Lottery</h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300 opacity-80 w-10 h-10 sm:w-12 sm:h-12"><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M15 2v2" /><path d="M15 20v2" /><path d="M2 15h2" /><path d="M2 9h2" /><path d="M20 15h2" /><path d="M20 9h2" /><path d="M9 2v2" /><path d="M9 20v2" /></svg>
           </div>
           <div className="mb-6">
             <p className="text-gray-400 text-sm mb-1">Your Ticket ID</p>
             <div className="flex items-center">
-              <p className="text-4xl font-semibold tracking-widest mr-2">
+              <p className="text-2xl sm:text-4xl font-semibold tracking-widest mr-2 break-all">
                 {userTickets.length > 0 ? userTickets[0] : 'Not Registered'}
               </p>
               {userTickets.length > 0 && (
@@ -194,22 +194,22 @@ const Home = ({
           </div>
           <div className="mb-6">
             <p className="text-gray-400 text-xs uppercase tracking-wider">Wallet Address</p>
-            <p className="font-medium text-lg">{walletAddress}</p>
+            <p className="font-medium text-base sm:text-lg break-all">{walletAddress}</p>
           </div>
-          <div className="flex justify-between items-end">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end space-y-4 sm:space-y-0">
             <div>
               <p className="text-gray-400 text-xs uppercase tracking-wider">Pairs Matched</p>
               <p className="font-semibold text-base">{userData?.[4]?.toString() || '0'}</p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <p className="text-gray-400 text-xs uppercase tracking-wider">Total Earnings</p>
-              <p className="font-semibold text-2xl text-green-400">{`${web3.utils.fromWei(userData?.[5] || '0', 'ether')} USDT`}</p>
+              <p className="font-semibold text-xl sm:text-2xl text-green-400">{`${web3.utils.fromWei(userData?.[5] || '0', 'ether')} USDT`}</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+      <div className="p-4 sm:p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
         <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} />
       </div>
 

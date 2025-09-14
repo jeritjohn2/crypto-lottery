@@ -8,7 +8,7 @@ const usdtAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
   const walletAddress = "0x79f47536919166CAF62dC932165976539fC05465";
 
   const CryptoLottery = await hre.ethers.getContractFactory("CryptoLottery");
-  const contract = await CryptoLottery.deploy(usdtAddress, walletAddress);
+  const contract = await CryptoLottery.deploy(usdtAddress, walletAddress, walletAddress, walletAddress, walletAddress, walletAddress);
 
   await contract.waitForDeployment();
 

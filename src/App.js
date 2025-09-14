@@ -15,6 +15,7 @@ import lotteryAbi from './abi/lotteryAbi.json';
 import { LOTTERY_ADDRESS } from './constants';
 import { useToast } from './contexts/ToastContext';
 import { getContracts } from './utils/contract';
+import { Menu } from 'lucide-react';
 
 const App = () => {
   const [walletAddress, setWalletAddress] = useState('');
@@ -25,6 +26,7 @@ const App = () => {
   const [userData, setUserData] = useState(null);
   const [userTickets, setUserTickets] = useState([]);
   const { showToast } = useToast();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   const connectWallet = async () => {
     try {
@@ -39,7 +41,7 @@ const App = () => {
       setWalletAddress(address);
       const contract = new web3Instance.eth.Contract(lotteryAbi, LOTTERY_ADDRESS);
       setLotteryContract(contract);
-
+      console.log(address);
       const user = await contract.methods.getUser(address).call();
       console.log('User data:', user);
       if (user.referrer !== '0x0000000000000000000000000000000000000000') {
@@ -70,8 +72,9 @@ const App = () => {
       showToast('Please approve the transaction in your wallet.', 'info');
       const {contract, usdt} = getContracts(web3);
       //give some usdt to user for testing
-      await usdt.methods.mint(walletAddress, web3.utils.toWei('10', 'ether')).send({ from: walletAddress });
-      await usdt.methods.approve(LOTTERY_ADDRESS, web3.utils.toWei('10', 'ether')).send({ from: walletAddress })
+      console.log("Minting and approving USDT for user...",contract.options.address);
+      await usdt.methods.mint(walletAddress, web3.utils.toWei('300', 'ether')).send({ from: walletAddress });
+      await usdt.methods.approve(LOTTERY_ADDRESS, web3.utils.toWei('300', 'ether')).send({ from: walletAddress })
       const balance = await usdt.methods.balanceOf(walletAddress).call();
       console.log("USDT balance of user:", balance); 
       const sBalance = await usdt.methods.balanceOf("0x79f47536919166CAF62dC932165976539fC05465").call();
@@ -95,8 +98,11 @@ const App = () => {
   return (
     <Router>
       <div className="flex h-screen bg-background text-text [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]">
-        <Sidebar walletAddress={walletAddress} connectWallet={connectWallet} />
-        <main className="flex-1 p-8 overflow-y-auto">
+        <Sidebar walletAddress={walletAddress} connectWallet={connectWallet} isOpen={isSidebarOpen} setIsOpen={setSidebarOpen} />
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          <button className="md:hidden mb-4 text-white" onClick={() => setSidebarOpen(true)}>
+            <Menu size={24} />
+          </button>
           <Routes>
             <Route path="/" element={
               <Home

@@ -70,20 +70,20 @@ const Payout = () => {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <main className="flex-1 overflow-y-auto p-6">
-        <div className="p-6 rounded-lg shadow-lg max-w-md mx-auto backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+      <main className="flex-1 overflow-y-auto p-2 sm:p-6">
+        <div className="p-4 sm:p-6 rounded-lg shadow-lg max-w-md mx-auto backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <h2 className="text-2xl font-bold mb-2 text-center text-white">Request Payout</h2>
           <p className="text-center text-gray-400 mb-6 text-sm">A 5% service charge will be applied to all payouts.</p>
           <p className="text-center text-gray-400 mb-6 text-sm">Minimum payout amount is 10 USDT.</p>
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg text-center backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
                 <p className="text-sm text-gray-400">Prize Earnings</p>
-                <p className="text-3xl font-bold text-white">{parseFloat(prizeEarnings).toFixed(2)} USDT</p>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{parseFloat(prizeEarnings).toFixed(2)} USDT</p>
               </div>
               <div className="p-4 rounded-lg text-center backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
                 <p className="text-sm text-gray-400">Referral Earnings</p>
-                <p className="text-3xl font-bold text-white">{parseFloat(referralEarnings).toFixed(2)} USDT</p>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{parseFloat(referralEarnings).toFixed(2)} USDT</p>
               </div>
             </div>
             <div className="relative">
@@ -114,11 +114,11 @@ const Payout = () => {
           </div>
         </div>
 
-        <div className="p-6 rounded-lg shadow-lg max-w-md mx-auto mt-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+        <div className="p-4 sm:p-6 rounded-lg shadow-lg max-w-md mx-auto mt-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <h2 className="text-xl font-semibold mb-4">Your Payout Requests</h2>
           <div className="space-y-4">
             {userRequests.map((request, index) => (
-              <div key={index} className="flex flex-wrap items-center justify-between p-4 rounded-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+              <div key={index} className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between p-4 rounded-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20 space-y-2 sm:space-y-0">
                 <div className="mb-2 sm:mb-0">
                   <p className="text-sm text-gray-400">{new Date().toLocaleString()}</p>
                   <p className="font-mono">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>

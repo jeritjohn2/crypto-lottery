@@ -116,9 +116,9 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
         <h2 className="text-xl font-semibold">Transaction History</h2>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {isAdmin && (
             <div className="relative">
               <button
@@ -153,7 +153,7 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
             </div>
           )}
           {setFilterType && ( // Only show filter if setFilterType is provided (i.e., in Admin page)
-            <select className="bg-gray-700 text-white p-2 rounded-lg" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <select className="bg-gray-700 text-white p-2 rounded-lg text-sm sm:text-base" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               {filters.map((filter) => (
                 <option key={filter} value={filter}>{filter} </option>
               ))}
@@ -165,30 +165,30 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-gray-700">
-              <th className="p-3">Type</th>
-              <th className="p-3">User</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Time</th>
-              <th className="p-3">Details</th>
+              <th className="p-2 sm:p-3">Type</th>
+              <th className="p-2 sm:p-3 hidden sm:table-cell">User</th>
+              <th className="p-2 sm:p-3">Amount</th>
+              <th className="p-2 sm:p-3 hidden md:table-cell">Time</th>
+              <th className="p-2 sm:p-3">Details</th>
             </tr>
           </thead>
           <tbody>
             {currentTransactions.length > 0 ? (
               currentTransactions.map((tx, index) => (
                 <tr key={index} className="border-b border-gray-700 hover:bg-gray-700/50">
-                  <td className="p-3 flex items-center space-x-2">
+                  <td className="p-2 sm:p-3 flex items-center space-x-2">
                     {getTransactionIcon(tx.type)}
-                    <span>{tx.type}</span>
+                    <span className="hidden sm:inline">{tx.type}</span>
                   </td>
-                  <td className="p-3 font-mono group relative">
+                  <td className="p-2 sm:p-3 font-mono group relative hidden sm:table-cell">
                     <p className="cursor-pointer">{tx.user.substring(0, 6)}...{tx.user.substring(tx.user.length - 4)}</p>
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2">
                       {tx.user}
                     </div>
                   </td>
-                  <td className="p-3">{tx.amount}</td>
-                  <td className="p-3">{tx.time}</td>
-                  <td className="p-3">
+                  <td className="p-2 sm:p-3">{tx.amount}</td>
+                  <td className="p-2 sm:p-3 hidden md:table-cell">{tx.time}</td>
+                  <td className="p-2 sm:p-3">
                     <button onClick={() => onSelectTransaction(tx)} className="p-2 rounded-lg hover:bg-gray-700">
                       <Search size={20} />
                     </button>
@@ -243,8 +243,8 @@ export const TransactionTable = ({ transactions, onSelectTransaction, filterType
 
 
 export const TransactionModal = ({ transaction, onClose }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-    <div className="relative bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-700">
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div className="relative bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border border-gray-700">
       <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white p-2 rounded-full hover:bg-gray-700">
         <X size={24} />
       </button>

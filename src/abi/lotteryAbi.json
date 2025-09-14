@@ -8,7 +8,27 @@
         },
         {
           "internalType": "address",
-          "name": "_wallet",
+          "name": "prize_Wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "commission_Wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "product_Wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "profit_Wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "service_Wallet",
           "type": "address"
         }
       ],
@@ -679,6 +699,16 @@
           "internalType": "uint256",
           "name": "numberOfWinners",
           "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "fromTicketId",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "toTicketId",
+          "type": "string"
         }
       ],
       "name": "selectWinners",

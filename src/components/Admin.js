@@ -36,8 +36,8 @@ const Admin = () => {
   const getRewardTypeName = (type) => {
     switch (parseInt(type)) {
       case 1: return "Bluetooth Earbuds + Smartwatch";
-      case 2: return "BP Monitoring Machine";
-      case 3: return "Nebulizer";
+      case 2: return "Bluetooth Earbuds + BP Monitoring Machine";
+      case 3: return "Bluetooth Earbuds + Nebulizer";
       default: return "None";
     }
   };
@@ -49,7 +49,7 @@ const Admin = () => {
         const { lottery, usdt } = getContracts(web3Instance);
         setLotteryContract(lottery);
         setUsdtContract(usdt);
-
+        console.log();
         const ownerTicketGenerated = await lottery.methods.ownerTicketGenerated().call();
         setOwnerTicketGenerated(ownerTicketGenerated);
         if (ownerTicketGenerated) {
@@ -59,7 +59,6 @@ const Admin = () => {
 
         const requests = await lottery.methods.getAllPayoutRequests().call();
         setPayoutRequests(requests);
-
         // Fetch past events and user data
         const fetchedTransactions = [];
         const uniqueUsers = new Set();
@@ -247,7 +246,7 @@ const Admin = () => {
   if (!loggedIn) {
     return (
       <div className="flex items-center justify-center h-screen bg-transparent text-white">
-        <div className="p-8 rounded-lg shadow-lg max-w-md w-full backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+        <div className="p-6 sm:p-8 rounded-lg shadow-lg max-w-md w-full backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
           <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
           <div className="space-y-6">
             <input
@@ -272,7 +271,7 @@ const Admin = () => {
   return (
     <div className="flex bg-transparent text-white">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-4">
@@ -282,14 +281,14 @@ const Admin = () => {
                 <StatCard icon={<Award size={28} className="text-blue-500" />} title="Total Winners" value={totalWinners} />
               </div>
             </div>
-            <div className="lg:col-span-1 p-6 rounded-lg shadow-lg flex flex-col backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+            <div className="lg:col-span-1 p-4 sm:p-6 rounded-lg shadow-lg flex flex-col backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
               <h2 className="text-xl font-semibold mb-4">Admin Actions</h2>
               <div className="space-y-4 flex-grow">
                 {ownerTicketGenerated ? (
                   <div>
                     <p className="text-lg">Owner Ticket ID:</p>
                     <div className="flex items-center">
-                      <p className="p-3 bg-gray-700 rounded-lg font-mono mr-2">{ownerTicketId.toString()}</p>
+                      <p className="p-3 bg-gray-700 rounded-lg font-mono mr-2 break-all">{ownerTicketId.toString()}</p>
                       <button
                         onClick={() => handleCopyOwnerTicketId(ownerTicketId.toString())}
                         className="p-2 rounded-full hover:bg-white/20 transition-colors duration-200"
@@ -320,16 +319,16 @@ const Admin = () => {
             </div>
           </div>
 
-          <div className="p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"> 
+          <div className="p-4 sm:p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"> 
             <TransactionTable transactions={transactions} onSelectTransaction={setSelectedTransaction} filterType={filterType} setFilterType={setFilterType} isAdmin={true} />
           </div>
 
-          <div className="p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+          <div className="p-4 sm:p-6 rounded-lg shadow-lg mb-6 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
             <h2 className="text-xl font-semibold mb-4">Payout Requests</h2>
             <PayoutRequests payoutRequests={payoutRequests} handleProcessPayout={handleProcessPayout} />
           </div>
 
-          <div className="p-6 rounded-lg shadow-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+          <div className="p-4 sm:p-6 rounded-lg shadow-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
             <h2 className="text-xl font-semibold mb-4">User Stats</h2>
             <UserTable users={users} />
           </div>
@@ -351,13 +350,13 @@ const Admin = () => {
 
 
 const StatCard = ({ icon, title, value }) => (
-  <div className="p-5 rounded-xl shadow-lg flex items-center space-x-4 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+  <div className="p-4 rounded-xl shadow-lg flex items-center space-x-4 backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
     <div className="flex-shrink-0">
       {icon}
     </div>
     <div className="flex-1">
       <p className="text-sm text-gray-400">{title}</p>
-      <p className="text-xl font-bold">{value}</p>
+      <p className="text-lg sm:text-xl font-bold">{value}</p>
     </div>
   </div>
 );
@@ -365,9 +364,9 @@ const StatCard = ({ icon, title, value }) => (
 const PayoutRequests = ({ payoutRequests, handleProcessPayout }) => (
   <div className="space-y-4">
     {payoutRequests.map((request, index) => (
-      <div key={index} className="flex flex-wrap items-center justify-between p-4 rounded-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20">
+      <div key={index} className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between p-4 rounded-lg backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20 space-y-2 sm:space-y-0">
         <div className="mb-2 sm:mb-0">
-          <p className="font-mono">{request.user}</p>
+          <p className="font-mono text-sm sm:text-base break-all">{request.user}</p>
           <p className="text-sm text-gray-400">{Web3.utils.fromWei(request.amount, 'ether')} USDT</p>
         </div>
         <div className="flex items-center space-x-2">
@@ -410,25 +409,25 @@ const UserTable = ({ users }) => {
       <table className="w-full text-left">
         <thead>
           <tr className="border-b border-gray-700">
-            <th className="p-3">Wallet Address</th>
-            <th className="p-3">Referrer</th>
-            <th className="p-3">Pairs Matched</th>
-            <th className="p-3">Prize Earnings (USDT)</th>
-            <th className="p-3">Referral Earnings (USDT)</th>
-            <th className="p-3">Claimed Reward</th>
+            <th className="p-2 sm:p-3">Wallet Address</th>
+            <th className="p-2 sm:p-3 hidden md:table-cell">Referrer</th>
+            <th className="p-2 sm:p-3">Pairs</th>
+            <th className="p-2 sm:p-3 hidden lg:table-cell">Prize Earnings</th>
+            <th className="p-2 sm:p-3 hidden lg:table-cell">Referral Earnings</th>
+            <th className="p-2 sm:p-3 hidden md:table-cell">Claimed Reward</th>
           </tr>
         </thead>
         <tbody>
           {currentUsers.length > 0 ? (
             currentUsers.map((user, index) => (
               <tr key={index} className="border-b border-gray-700 hover:bg-gray-700/50">
-                <td className="p-3 font-mono group relative">
+                <td className="p-2 sm:p-3 font-mono group relative">
                   <p className="cursor-pointer">{user.address.substring(0, 6)}...{user.address.substring(user.address.length - 4)}</p>
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2">
                     {user.address}
                   </div>
                 </td>
-                <td className="p-3 font-mono group relative">
+                <td className="p-2 sm:p-3 font-mono group relative hidden md:table-cell">
                   {user.referrer !== '0x0000000000000000000000000000000000000000' ? (
                     <>
                       <p className="cursor-pointer">{user.referrer.substring(0, 6)}...{user.referrer.substring(user.referrer.length - 4)}</p>
@@ -440,10 +439,10 @@ const UserTable = ({ users }) => {
                     <span>N/A</span>
                   )}
                 </td>
-                <td className="p-3 text-center">{user.pairsMatched.toString()}</td>
-                <td className="p-3">{user.prizeEarnings}</td>
-                <td className="p-3">{user.referralEarnings}</td>
-                <td className="p-3">{user.claimedReward}</td>
+                <td className="p-2 sm:p-3 text-center">{user.pairsMatched.toString()}</td>
+                <td className="p-2 sm:p-3 hidden lg:table-cell">{user.prizeEarnings}</td>
+                <td className="p-2 sm:p-3 hidden lg:table-cell">{user.referralEarnings}</td>
+                <td className="p-2 sm:p-3 hidden md:table-cell">{user.claimedReward}</td>
               </tr>
             ))
           ) : (

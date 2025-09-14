@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "hardhat/console.sol";
 
-
 interface IERC20 {
     function transferFrom(
         address from,
@@ -20,8 +19,8 @@ contract CryptoLottery {
     enum RewardType {
         None,
         BluetoothEarbudsSmartwatch,
-        BPMonitoringMachine,
-        Nebulizer
+        BluetoothEarbudsBPMonitoringMachine,
+        BluetoothEarbudsNebulizer
     }
 
     struct User {
@@ -98,7 +97,7 @@ contract CryptoLottery {
     address public profitWallet;
     address public serviceWallet;
 
-    uint256 public constant TICKET_PRICE = 1e19;
+    uint256 public constant TICKET_PRICE = 20e19;
 
     event Registered(address indexed user, address indexed referrer);
     event TicketPurchased(
@@ -136,15 +135,21 @@ contract CryptoLottery {
         RewardType rewardType
     );
 
-    constructor(address _usdt, address _wallet) {
+    constructor(
+        address _usdt,
+        address prize_Wallet,
+        address commission_Wallet,
+        address product_Wallet,
+        address profit_Wallet,
+        address service_Wallet
+    ) {
         owner = msg.sender;
         usdt = IERC20(_usdt);
-
-        prizeWallet = _wallet;
-        commissionWallet = _wallet;
-        productWallet = _wallet;
-        profitWallet = _wallet;
-        serviceWallet = _wallet;
+        prizeWallet = prize_Wallet;
+        commissionWallet = commission_Wallet;
+        productWallet = product_Wallet;
+        profitWallet = profit_Wallet;
+        serviceWallet = service_Wallet;
 
         users[msg.sender] = User({
             referrer: address(0),
@@ -218,49 +223,65 @@ contract CryptoLottery {
         uint256 reward;
 
         if (pairs >= 3 && user.rewardedMilestone < 3) {
-            reward = getMilestoneBonus(3) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(3) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 3;
             emit PairMatchingReward(userAddr, 100, reward);
         }
         if (pairs >= 6 && user.rewardedMilestone < 6) {
-            reward = getMilestoneBonus(6) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(6) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 500;
             emit PairMatchingReward(userAddr, 500, reward);
         }
         if (pairs >= 2500 && user.rewardedMilestone < 2500) {
-            reward = getMilestoneBonus(2500) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(2500) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 2500;
             emit PairMatchingReward(userAddr, 2500, reward);
         }
         if (pairs >= 5000 && user.rewardedMilestone < 5000) {
-            reward = getMilestoneBonus(5000) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(5000) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 5000;
             emit PairMatchingReward(userAddr, 5000, reward);
         }
         if (pairs >= 10000 && user.rewardedMilestone < 10000) {
-            reward = getMilestoneBonus(10000) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(10000) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 10000;
             emit PairMatchingReward(userAddr, 10000, reward);
         }
         if (pairs >= 25000 && user.rewardedMilestone < 25000) {
-            reward = getMilestoneBonus(25000) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(25000) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 25000;
             emit PairMatchingReward(userAddr, 25000, reward);
         }
         if (pairs >= 50000 && user.rewardedMilestone < 50000) {
-            reward = getMilestoneBonus(50000) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(50000) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 50000;
             emit PairMatchingReward(userAddr, 50000, reward);
         }
         if (pairs >= 100000 && user.rewardedMilestone < 100000) {
-            reward = getMilestoneBonus(100000) - getMilestoneBonus(user.rewardedMilestone);
+            reward =
+                getMilestoneBonus(100000) -
+                getMilestoneBonus(user.rewardedMilestone);
             user.prizeEarnings += reward;
             user.rewardedMilestone = 100000;
             emit PairMatchingReward(userAddr, 100000, reward);
@@ -310,7 +331,10 @@ contract CryptoLottery {
         if (users[msg.sender].referrer == address(0)) {
             register(referrerAddr);
         }
-        require(usdt.transferFrom(msg.sender, address(this), TICKET_PRICE), "Transfer failed");
+        require(
+            usdt.transferFrom(msg.sender, address(this), TICKET_PRICE),
+            "Transfer failed"
+        );
         usdt.transfer(prizeWallet, (TICKET_PRICE * 2329) / 10000);
         usdt.transfer(commissionWallet, (TICKET_PRICE * 2300) / 10000);
         usdt.transfer(productWallet, (TICKET_PRICE * 2971) / 10000);
@@ -332,33 +356,35 @@ contract CryptoLottery {
     }
 
     function generateTicketId() internal returns (string memory) {
-    if (ticketNumber > 99999) {
-        ticketNumber = 1;
-        suffix = bytes1(uint8(suffix) + 1);
+        if (ticketNumber > 99999) {
+            ticketNumber = 1;
+            suffix = bytes1(uint8(suffix) + 1);
+        }
+
+        // Convert the number to a string with leading zeros using abi.encodePacked
+        // Instead of looping, format in one go.
+        string memory numberStr = uintToPaddedString(ticketNumber, 7);
+
+        string memory fullId = string(
+            abi.encodePacked("CL252", numberStr, suffix)
+        );
+
+        ticketNumber++;
+        return fullId;
     }
 
-    // Convert the number to a string with leading zeros using abi.encodePacked
-    // Instead of looping, format in one go.
-    string memory numberStr = uintToPaddedString(ticketNumber, 7);
-
-    string memory fullId = string(
-        abi.encodePacked("CL252", numberStr, suffix)
-    );
-
-    ticketNumber++;
-    return fullId;
-}
-
-// Helper: zero-pads uint to desired length
-function uintToPaddedString(uint256 num, uint256 length) internal pure returns (string memory) {
-    bytes memory buffer = new bytes(length);
-    for (uint256 i = length; i > 0; i--) {
-        buffer[i - 1] = bytes1(uint8(48 + (num % 10)));
-        num /= 10;
+    // Helper: zero-pads uint to desired length
+    function uintToPaddedString(
+        uint256 num,
+        uint256 length
+    ) internal pure returns (string memory) {
+        bytes memory buffer = new bytes(length);
+        for (uint256 i = length; i > 0; i--) {
+            buffer[i - 1] = bytes1(uint8(48 + (num % 10)));
+            num /= 10;
+        }
+        return string(buffer);
     }
-    return string(buffer);
-}
-
 
     function getRewardAmount(
         ContestType contest
@@ -390,19 +416,48 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
         }
     }
 
+    function getTicketNumericId(
+        string memory ticketId
+    ) internal pure returns (uint256) {
+        bytes memory ticketBytes = bytes(ticketId);
+        // Assuming format "CL252" + 7 digits + 1 suffix char
+        // "CL252" is 5 chars. The number starts at index 5.
+        require(ticketBytes.length == 13, "Invalid ticket ID length");
+
+        uint256 numericId = 0;
+        for (uint i = 5; i < 12; i++) {
+            require(
+                ticketBytes[i] >= 0x30 && ticketBytes[i] <= 0x39,
+                "Invalid character in ticket ID"
+            );
+            numericId = numericId * 10 + (uint8(ticketBytes[i]) - 48);
+        }
+        return numericId;
+    }
+
     function selectWinners(
         ContestType contestType,
-        uint256 numberOfWinners
+        uint256 numberOfWinners,
+        string memory fromTicketId,
+        string memory toTicketId
     ) external {
-        // Step 1: Collect eligible tickets (not yet winners)
+        uint256 fromNumericId = getTicketNumericId(fromTicketId);
+        uint256 toNumericId = getTicketNumericId(toTicketId);
+
+        // Step 1: Collect eligible tickets (not yet winners and within range)
         uint256 eligibleCount = 0;
         for (uint256 i = 0; i < allTickets.length; i++) {
-            if (!ticketHasWon[allTickets[i]]) {
+            uint256 currentNumericId = getTicketNumericId(allTickets[i]);
+            if (
+                !ticketHasWon[allTickets[i]] &&
+                currentNumericId >= fromNumericId &&
+                currentNumericId <= toNumericId
+            ) {
                 eligibleCount++;
             }
         }
 
-        require(eligibleCount > 0);
+        require(eligibleCount > 0, "No eligible tickets in the given range");
 
         // If number of winners exceeds eligible tickets, adjust
         if (numberOfWinners > eligibleCount) {
@@ -413,7 +468,12 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
         uint256 index = 0;
 
         for (uint256 i = 0; i < allTickets.length; i++) {
-            if (!ticketHasWon[allTickets[i]]) {
+            uint256 currentNumericId = getTicketNumericId(allTickets[i]);
+            if (
+                !ticketHasWon[allTickets[i]] &&
+                currentNumericId >= fromNumericId &&
+                currentNumericId <= toNumericId
+            ) {
                 eligibleTickets[index++] = allTickets[i];
             }
         }
@@ -424,6 +484,7 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
 
         for (uint256 i = 0; i < numberOfWinners; i++) {
             uint256 rand;
+            uint256 attempts = 0;
             do {
                 rand =
                     uint256(
@@ -433,11 +494,13 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
                                 block.prevrandao,
                                 msg.sender,
                                 i,
-                                block.number
+                                block.number,
+                                attempts
                             )
                         )
                     ) %
                     eligibleCount;
+                attempts++;
             } while (selected[rand]);
 
             selected[rand] = true;
@@ -540,18 +603,28 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
         if (approve) {
             // Deposit USDT into this contract
             if (request.earningType == EarningType.Prize) {
-                usdt.transferFrom(prizeWallet, address(this), request.amount + request.serviceFee);
+                usdt.transferFrom(
+                    prizeWallet,
+                    address(this),
+                    request.amount + request.serviceFee
+                );
             } else {
-                usdt.transferFrom(commissionWallet, address(this), request.amount + request.serviceFee);
+                usdt.transferFrom(
+                    commissionWallet,
+                    address(this),
+                    request.amount + request.serviceFee
+                );
             }
             usdt.transfer(serviceWallet, request.serviceFee);
             usdt.transfer(request.user, request.amount);
         } else {
             // Refund user
             if (request.earningType == EarningType.Prize) {
-                users[request.user].prizeEarnings += (request.amount + request.serviceFee);
+                users[request.user].prizeEarnings += (request.amount +
+                    request.serviceFee);
             } else {
-                users[request.user].referralEarnings += (request.amount + request.serviceFee);
+                users[request.user].referralEarnings += (request.amount +
+                    request.serviceFee);
             }
         }
 
@@ -564,10 +637,13 @@ function uintToPaddedString(uint256 num, uint256 length) internal pure returns (
     }
     function claimReward(RewardType rewardType) external {
         User storage user = users[msg.sender];
-        require(user.claimedReward == RewardType.None, "Reward already claimed");
+        require(
+            user.claimedReward == RewardType.None,
+            "Reward already claimed"
+        );
         require(rewardType != RewardType.None, "Invalid reward type");
         user.claimedReward = rewardType;
-        emit RewardClaimed(msg.sender,user.referrer, rewardType);
+        emit RewardClaimed(msg.sender, user.referrer, rewardType);
     }
 
     function getAllPayoutRequests()

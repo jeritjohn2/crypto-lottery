@@ -4,6 +4,8 @@ import { contests } from '../constants';
 
 const WinnerSelectionDialog = ({ isOpen, onClose, lotteryContract }) => {
   const [selectedContestType, setSelectedContestType] = useState(null);
+  const [fromTicketId, setFromTicketId] = useState('');
+  const [toTicketId, setToTicketId] = useState('');
   const { showToast } = useToast();
 
   const handleSelectWinners = async () => {
@@ -13,9 +15,13 @@ const WinnerSelectionDialog = ({ isOpen, onClose, lotteryContract }) => {
         showToast('Invalid contest selected.', 'error');
         return;
       }
+      if (!fromTicketId || !toTicketId) {
+        showToast('Please enter a "from" and "to" ticket ID.', 'error');
+        return;
+      }
       try {
         showToast('Please approve the transaction in your wallet.', 'info');
-        await lotteryContract.methods.selectWinners(contest.contestType, contest.winners).send({ from: window.ethereum.selectedAddress });
+        await lotteryContract.methods.selectWinners(contest.contestType, contest.winners, fromTicketId, toTicketId).send({ from: window.ethereum.selectedAddress });
         showToast('Winners selected successfully!', 'success');
         onClose();
       } catch (error) {
@@ -30,8 +36,8 @@ const WinnerSelectionDialog = ({ isOpen, onClose, lotteryContract }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-2xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-white">Select Winners</h2>
         <div className="mb-6">
           <label htmlFor="contest-select" className="block text-gray-300 text-sm font-bold mb-2">Contest Type:</label>
@@ -49,7 +55,29 @@ const WinnerSelectionDialog = ({ isOpen, onClose, lotteryContract }) => {
             ))}
           </select>
         </div>
-        <div className="flex justify-end space-x-4">
+        <div className="mb-6">
+          <label htmlFor="from-ticket-id" className="block text-gray-300 text-sm font-bold mb-2">From Ticket ID:</label>
+          <input
+            id="from-ticket-id"
+            type="text"
+            className="block w-full bg-gray-700 border border-gray-600 text-white py-3 px-4 rounded-lg leading-tight focus:outline-none focus:bg-gray-600 focus:border-blue-500"
+            value={fromTicketId}
+            onChange={(e) => setFromTicketId(e.target.value)}
+            placeholder="e.g., CL2520000001A"
+          />
+        </div>
+        <div className="mb-6">
+          <label htmlFor="to-ticket-id" className="block text-gray-300 text-sm font-bold mb-2">To Ticket ID:</label>
+          <input
+            id="to-ticket-id"
+            type="text"
+            className="block w-full bg-gray-700 border border-gray-600 text-white py-3 px-4 rounded-lg leading-tight focus:outline-none focus:bg-gray-600 focus:border-blue-500"
+            value={toTicketId}
+            onChange={(e) => setToTicketId(e.target.value)}
+            placeholder="e.g., CL2520000100A"
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
           <button
             onClick={onClose}
             className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300"

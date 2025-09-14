@@ -3,7 +3,7 @@ import { contests } from '../constants';
 
 const ContestCard = ({ contest }) => (
   <div
-    className="p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col justify-between cursor-pointer backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"
+    className="p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col justify-between cursor-pointer backdrop-filter backdrop-blur-lg bg-white/10 border border-white/20"
   >
     <div>
       <div className="flex items-center text-accent mb-4">
@@ -22,8 +22,8 @@ const Contest = () => {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">All Contests</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center">All Contests</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
         {contests.map(contest => (
           <ContestCard key={contest.id} contest={contest} />
         ))}
